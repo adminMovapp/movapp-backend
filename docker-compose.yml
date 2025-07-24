@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+   backend:
+      build: .
+      ports:
+         - "5002:3005"
+      environment:
+         - PORT=3005
+         - PG_USER=movapp_user
+         - PG_PASSWORD=movapp_pass
+         - PG_HOST=db
+         - PG_PORT=5432
+         - PG_DATABASE=Movapp
+         - MERCADOPAGO_ACCESS_TOKEN=TEST-6998812327808022-071803-92baf41b2322ab32f8f2d863ebc1e3d3-141676840
+      depends_on:
+         - db
+
+   db:
+      image: postgres:16
+      restart: always
+      environment:
+         - POSTGRES_USER=movapp_user
+         - POSTGRES_PASSWORD=movapp_pass
+         - POSTGRES_DB=Movapp
+      ports:
+         - "5432:5432"
+      volumes:
+         - movapp_db_data:/var/lib/postgresql/data
+
+volumes:
+   movapp_db_data:

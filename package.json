@@ -1,0 +1,22 @@
+{
+   "name": "movapp-backend",
+   "version": "1.0.0",
+   "main": "index.js",
+   "type": "module",
+   "scripts": {
+      "dev": "nodemon index.js",
+      "start": "node index.js"
+   },
+   "keywords": [],
+   "author": "IFV",
+   "license": "ISC",
+   "description": "",
+   "dependencies": {
+      "axios": "^1.11.0",
+      "cors": "^2.8.5",
+      "dotenv": "^17.2.0",
+      "express": "^5.1.0",
+      "mercadopago": "^2.8.0",
+      "pg": "^8.16.3"
+   }
+}
