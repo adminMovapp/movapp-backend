@@ -11,7 +11,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/payments", pagosRouter);
+app.get("/status-api", (req, res) => {
+   res.status(200).json({
+      status: "ok",
+      updatedAt: new Date().toISOString(),
+   });
+});
+
+app.use("/payments", pagosRouter);
 
 initTables();
 

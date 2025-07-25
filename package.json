@@ -1,11 +1,11 @@
 {
    "name": "movapp-backend",
    "version": "1.0.0",
-   "main": "index.js",
+   "main": "server.js",
    "type": "module",
    "scripts": {
-      "dev": "nodemon index.js",
-      "start": "node index.js"
+      "dev": "nodemon server.js",
+      "start": "node server.js"
    },
    "keywords": [],
    "author": "IFV",
