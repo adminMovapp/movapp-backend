@@ -23,7 +23,8 @@ app.use("/payments", pagosRouter);
 initTables();
 
 const PORT = process.env.PORT || 3000;
+
 const PG_HOST = process.env.PG_HOST || "localhost";
 app.listen(PORT, () => {
-   console.log(`Servidor corriendo en http://${PG_HOST}:${PORT}`);
+   console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
 });

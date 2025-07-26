@@ -4,9 +4,9 @@ services:
    backend:
       build: .
       ports:
-         - "5002:3005"
+         - "5005:3005"
       env_file:
-         - .env
+         - .env.docker
       depends_on:
          - db
 
