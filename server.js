@@ -3,8 +3,13 @@ import express from "express";
 import cors from "cors";
 import { initTables } from "./models/tables.js";
 import pagosRouter from "./routes/payments.js";
+import dotenv from 'dotenv';
 
 dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();  // Carga las variables de .env solo en desarrollo
+}
+
 
 const app = express();
 
@@ -28,7 +33,10 @@ initTables();
 
 const PORT = process.env.PORT || 3000;
 
-const PG_HOST = process.env.PG_HOST || "localhost";
+
+console.log('DB Host:', process.env.DB_HOST);  // Esto debería mostrar la IP correcta de tu base de datos
+console.log('DB Port:', process.env.DB_PORT);
+
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
 });
