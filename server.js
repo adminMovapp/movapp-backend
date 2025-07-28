@@ -7,9 +7,9 @@ import pagosRouter from "./routes/payments.js";
 
 const app = express();
 
-// if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production") {
    dotenv.config();
-// }
+}
 
 app.use(cors({
    origin: '*',  
@@ -34,5 +34,6 @@ app.use("/payments", pagosRouter);
  initTables();
 
 app.listen(PORT, () => {
-   console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
+     console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
+     console.log(`✅  Conectado a la base de datos en puerto:${DB_PORT}`);
 });
