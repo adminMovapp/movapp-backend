@@ -2,12 +2,12 @@
 import dotenv from "dotenv";
 import pkg from "pg";
 
-const isProduction = process.env.NODE_ENV === 'production';
+// const isProduction = process.env.NODE_ENV === 'production';
 
 
-// if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production") {
    dotenv.config();
-// }
+}
 
 const { Pool } = pkg;
 
@@ -17,7 +17,7 @@ const pool = new Pool({
    user: process.env.PG_USER,
    password: process.env.PG_PASSWORD,
    database: process.env.PG_DATABASE,
-   ssl: isProduction ? { rejectUnauthorized: false } : false,
+   // ssl: isProduction ? { rejectUnauthorized: false } : false,
 
 });
 
