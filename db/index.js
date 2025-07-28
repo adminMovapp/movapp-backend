@@ -2,9 +2,9 @@
 import dotenv from "dotenv";
 import pkg from "pg";
 
-if (process.env.NODE_ENV !== "production") {
+// if (process.env.NODE_ENV !== "production") {
    dotenv.config();
-}
+// }
 
 const { Pool } = pkg;
 
