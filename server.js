@@ -7,9 +7,9 @@ import pagosRouter from "./routes/payments.js";
 
 const app = express();
 
-if (process.env.NODE_ENV !== "production") {
+// if (process.env.NODE_ENV !== "production") {
    dotenv.config();
-}
+// }
 
 app.use(cors({
    origin: '*',  
