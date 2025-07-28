@@ -2,24 +2,48 @@
 import dotenv from "dotenv";
 import pkg from "pg";
 
-// const isProduction = process.env.NODE_ENV === 'production';
-
-
+// Cargar las variables de entorno solo si no estamos en producción
 if (process.env.NODE_ENV !== "production") {
-   dotenv.config();
+  dotenv.config();
 }
 
 const { Pool } = pkg;
 
+// Establecer la configuración de conexión con la base de datos
 const pool = new Pool({
-   host: process.env.PG_HOST,
-   port: Number(process.env.PG_PORT),
-   user: process.env.PG_USER,
-   password: process.env.PG_PASSWORD,
-   database: process.env.PG_DATABASE,
-   // ssl: isProduction ? { rejectUnauthorized: false } : false,
-
+  host: process.env.PG_HOST,
+  port: Number(process.env.PG_PORT),
+  user: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
+  database: process.env.PG_DATABASE,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false, // SSL en producción
 });
 
-export const query = (text, params) => pool.query(text, params);
+// Función para manejar consultas con manejo de errores
+export const query = async (text, params) => {
+  try {
+    // Realizar la consulta
+    const result = await pool.query(text, params);
+    return result; // Retornar el resultado de la consulta
+  } catch (error) {
+    // Manejar errores durante la ejecución de la consulta
+    console.error('Error en la consulta a la base de datos:', error.message);
+    throw new Error('Error en la consulta a la base de datos'); // Lanzamos el error para ser manejado externamente
+  }
+};
+
+// Verificar la conexión inicial al inicio de la aplicación
+const testConnection = async () => {
+  try {
+    await pool.connect();
+    console.log("Conexión a la base de datos exitosa.");
+  } catch (error) {
+    console.error("Error al conectar a la base de datos:", error.message);
+    process.exit(1); // Terminar la aplicación si no podemos conectar a la base de datos
+  }
+};
+
+// Llamar a la función de prueba de conexión al iniciar
+testConnection();
+
 export { pool };
