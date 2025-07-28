@@ -1,8 +1,10 @@
 // db.js
-import pkg from "pg";
 import dotenv from "dotenv";
+import pkg from "pg";
 
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+   dotenv.config();
+}
 
 const { Pool } = pkg;
 
