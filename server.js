@@ -31,7 +31,7 @@ app.get("/status-api", (req, res) => {
 
 app.use("/payments", pagosRouter);
 
-//  initTables();
+ initTables();
 
 app.listen(PORT, () => {
      console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
