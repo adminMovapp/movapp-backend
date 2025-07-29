@@ -42,7 +42,7 @@ export const crearPreferencia = async (pedido) => {
 
    try {
       const response = await preference.create({ body });
-      console.log(response);
+      // console.log(response);
       return response;
    } catch (error) {
       console.error("Error al crear preferencia:", error.response || error);
