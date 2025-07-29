@@ -29,7 +29,13 @@ export const query = async (text, params) => {
     return result; // Retornar el resultado de la consulta
   } catch (error) {
     // Manejar errores durante la ejecución de la consulta
-    console.error('Error en la consulta a la base de datos:', process.env.PG_DATABASE, error.message);
+    console.error('Error en la consulta a la base de datos:',  error.message);
+    console.error('Host:', process.env.PG_HOST);
+    console.log(`Puerto: ${process.env.PG_PORT}`);
+    console.error('Usuario:', process.env.PG_USER);
+    console.error('Contraseña:', process.env.PG_PASSWORD);
+    console.log(`database: ${process.env.PG_DATABASE}`);
+
     throw new Error('Error en la consulta a la base de datos', { cause: error }); // Lanzamos el error para ser manejado externamente
   }
 };
