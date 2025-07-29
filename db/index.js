@@ -30,11 +30,11 @@ export const query = async (text, params) => {
   } catch (error) {
     // Manejar errores durante la ejecución de la consulta
     console.error('Error en la consulta a la base de datos:',  error.message);
-    console.error('Host:', process.env.PG_HOST);
-    console.log(`Puerto: ${process.env.PG_PORT}`);
-    console.error('Usuario:', process.env.PG_USER);
-    console.error('Contraseña:', process.env.PG_PASSWORD);
-    console.log(`database: ${process.env.PG_DATABASE}`);
+   //  console.error('Host:', process.env.PG_HOST);
+   //  console.log(`Puerto: ${process.env.PG_PORT}`);
+   //  console.error('Usuario:', process.env.PG_USER);
+   //  console.error('Contraseña:', process.env.PG_PASSWORD);
+   //  console.log(`database: ${process.env.PG_DATABASE}`);
 
     throw new Error('Error en la consulta a la base de datos', { cause: error }); // Lanzamos el error para ser manejado externamente
   }
@@ -47,7 +47,6 @@ const testConnection = async () => {
     console.log("Conexión a la base de datos exitosa.");
   } catch (error) {
     console.error("Error al conectar a la base de datos:", error.message);
-    process.exit(1); // Terminar la aplicación si no podemos conectar a la base de datos
   }
 };
 
