@@ -46,7 +46,6 @@ router.post("/webhook", async (req, res) => {
 
          await actualizarEstadoPedido(pedidoId, pago.status);
       }
-
       res.status(200).send("OK");
    } catch (error) {
       console.error("❌ Error en webhook:", error);
