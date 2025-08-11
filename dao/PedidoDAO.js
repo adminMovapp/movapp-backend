@@ -18,3 +18,8 @@ export const crearPedido = async (pedido) => {
 export const actualizarEstadoPedido = async (pedidoId, nuevoEstado) => {
    await query(`UPDATE pedidos SET estatus_pago = $1 WHERE id = $2`, [nuevoEstado, pedidoId]);
 };
+
+export const obtenerPedidos = async () => {
+   const result = await query("SELECT * FROM pedidos");
+   return result.rows;
+};

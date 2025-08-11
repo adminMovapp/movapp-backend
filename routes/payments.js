@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { crearPreferencia, obtenerDetallePago } from "../services/mercadopago.js";
-import { crearPedido, actualizarEstadoPedido } from "../dao/PedidoDAO.js";
-import { registrarPago } from "../dao/PagoDAO.js";
+import { crearPedido, actualizarEstadoPedido, obtenerPedidos } from "../dao/PedidoDAO.js";
+import { registrarPago, obtenerPagos } from "../dao/PagoDAO.js";
 
 const router = Router();
 
@@ -50,6 +50,24 @@ router.post("/webhook", async (req, res) => {
    } catch (error) {
       console.error("❌ Error en webhook:", error);
       res.status(500).send("Error en webhook");
+   }
+});
+
+router.get("/pagos", async (req, res) => {
+   try {
+      const pagos = await obtenerPagos();
+      res.json(pagos);
+   } catch (error) {
+      res.status(500).json({ error: "Error al obtener pagos" });
+   }
+});
+
+router.get("/pedidos", async (req, res) => {
+   try {
+      const pedidos = await obtenerPedidos();
+      res.json(pedidos);
+   } catch (error) {
+      res.status(500).json({ error: "Error al obtener pagos" });
    }
 });
 
