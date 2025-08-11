@@ -10,3 +10,8 @@ export const registrarPago = async (pago) => {
       [pedido_id, id_pago_mp, estado, detalle_estado, monto, metodo_pago, tipo_pago, moneda],
    );
 };
+
+export const obtenerPagos = async () => {
+   const result = await query("SELECT * FROM pagos");
+   return result.rows;
+};
