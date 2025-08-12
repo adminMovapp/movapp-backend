@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { crearPreferencia, obtenerDetallePago } from "../services/mercadopago.js";
-import { crearPedido, actualizarEstadoPedido, obtenerPedidos } from "../dao/PedidoDAO.js";
+import { crearPedido, actualizarEstadoPedido, obtenerPedidos, obtenerPedidosPagos } from "../dao/PedidoDAO.js";
 import { registrarPago, obtenerPagos } from "../dao/PagoDAO.js";
 
 const router = Router();
@@ -71,4 +71,12 @@ router.get("/pedidos", async (req, res) => {
    }
 });
 
+router.get("/pedidos-pagos", async (req, res) => {
+   try {
+      const pedidosPagos = await obtenerPedidosPagos();
+      res.json(pedidosPagos);
+   } catch (error) {
+      res.status(500).json({ error: "Error al obtener pagos" });
+   }
+});
 export default router;
