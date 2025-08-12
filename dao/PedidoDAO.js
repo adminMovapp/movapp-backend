@@ -23,3 +23,10 @@ export const obtenerPedidos = async () => {
    const result = await query("SELECT * FROM pedidos");
    return result.rows;
 };
+
+export const obtenerPedidosPagos = async () => {
+   const result = await query(` SELECT PED.id idPedido,*
+                                 FROM pedidos PED LEFT JOIN pagos PA ON (PED.id = PA.pedido_id)
+                                 ORDER BY PED.id `);
+   return result.rows;
+};
