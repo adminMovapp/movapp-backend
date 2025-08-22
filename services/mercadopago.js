@@ -13,11 +13,7 @@ const preference = new Preference(client);
 export const crearPreferencia = async (pedido) => {
    const { id, producto, precio_unitario, cantidad } = pedido;
 
-   console.log(id, producto, precio_unitario, cantidad);
-
-   console.log("accessToken", accessToken);
-   console.log("process.env.APP_BASE_URL", process.env.APP_BASE_URL);
-   console.log("process.env.MERCADOPAGO_URL_WEBHOOK", process.env.MERCADOPAGO_URL_WEBHOOK);
+   // console.log(id, producto, precio_unitario, cantidad);
 
    const body = {
       items: [
