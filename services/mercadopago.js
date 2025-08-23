@@ -60,7 +60,7 @@ export async function obtenerDetallePago(paymentId) {
          },
       });
 
-      console.log("📦 Detalles del pago api:", response.data);
+      // console.log("📦 Detalles del pago api:", response.data);
       return response.data;
    } catch (error) {
       console.error("❌ Error al obtener detalles del pago:", error.response?.data || error.message);
