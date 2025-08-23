@@ -2,13 +2,27 @@ import { Router } from "express";
 import { crearPreferencia, obtenerDetallePago } from "../services/mercadopago.js";
 import { crearPedido, actualizarEstadoPedido, obtenerPedidos, obtenerPedidosPagos } from "../dao/PedidoDAO.js";
 import { registrarPago, obtenerPagos } from "../dao/PagoDAO.js";
+import { encryptData, decryptData } from "../utils/crypto.js";
 
 const router = Router();
 
 // Crear preferencia de pago
 router.post("/create-preference", async (req, res) => {
    try {
-      const pedido = await crearPedido(req.body);
+      let payload;
+
+      // Verificar si los datos vienen cifrados
+      if (req.body.data) {
+         console.log("📥 Recibiendo datos cifrados...");
+         payload = decryptData(req.body.data);
+         console.log("🔓 Datos descifrados:", payload);
+      } else {
+         // Para compatibilidad con requests no cifrados
+         payload = req.body;
+         console.log("📥 Recibiendo datos sin cifrar:", payload);
+      }
+
+      const pedido = await crearPedido(payload);
       const preference = await crearPreferencia(pedido);
 
       res.json({ id: preference.id, init_point: preference.init_point });
