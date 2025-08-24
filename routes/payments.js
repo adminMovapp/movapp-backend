@@ -8,6 +8,8 @@ const router = Router();
 
 // Crear preferencia de pago
 router.post("/create-preference", async (req, res) => {
+   console.log("🔍 Body completo:", JSON.stringify(req.body, null, 2));
+
    try {
       let payload;
 
@@ -34,7 +36,7 @@ router.post("/create-preference", async (req, res) => {
 
 // Webhook de Mercado Pago
 router.post("/webhook", async (req, res) => {
-   // console.log("📩 Webhook recibido:", req.body);
+   console.log("📩 Webhook recibido:", req.body);
    try {
       const { type, data } = req.body;
 

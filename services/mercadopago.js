@@ -34,9 +34,16 @@ export const crearPreferencia = async (pedido) => {
       metadata: { pedidoId: id },
       external_reference: id.toString(),
       payment_methods: {
-         installments: 1, // limitar a 1 cuota
-         excluded_payment_methods: [], // aceptar todo
-         excluded_payment_types: [], // permitir tarjetas, débito, etc.
+         installments: 1,
+         excluded_payment_methods: [],
+         excluded_payment_types: [
+            { id: "ticket" },
+            { id: "bank_transfer" },
+            { id: "atm" },
+            { id: "digital_currency" },
+            { id: "digital_wallet" },
+         ],
+         default_installments: 1,
       },
    };
 
