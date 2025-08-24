@@ -34,17 +34,15 @@ export const crearPreferencia = async (pedido) => {
       metadata: { pedidoId: id },
       external_reference: id.toString(),
       payment_methods: {
-         installments: 1, // limitar a 1 cuota
-         excluded_payment_methods: [], // no excluir métodos específicos
+         installments: 1,
+         excluded_payment_methods: [],
          excluded_payment_types: [
-            // Excluir todos los tipos EXCEPTO tarjetas
-            "ticket", // Boletos de pago (Rapipago, Pago Fácil)
-            "bank_transfer", // Transferencias bancarias
-            "atm", // Cajeros automáticos
-            "digital_currency", // Monedas digitales
-            "digital_wallet", // Billeteras digitales (Mercado Pago)
+            { id: "ticket" },
+            { id: "bank_transfer" },
+            { id: "atm" },
+            { id: "digital_currency" },
+            { id: "digital_wallet" },
          ],
-         // Alternativamente, puedes usar default_installments
          default_installments: 1,
       },
    };
