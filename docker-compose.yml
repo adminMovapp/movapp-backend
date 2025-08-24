@@ -8,14 +8,8 @@ services:
          - "5005:3005"
       env_file:
          - .env.docker
-      environment:
-         - NODE_ENV=production
-         - TZ=America/Mexico_City
       depends_on:
-         db:
-            condition: service_healthy
-
-      restart: unless-stopped
+         - db
 
    db:
       image: postgres:16
@@ -29,12 +23,6 @@ services:
          - "5432:5432"
       volumes:
          - movapp_db_data:/var/lib/postgresql/data
-      healthcheck:
-         test: ["CMD-SHELL", "pg_isready -U admin -d Movapp"]
-         interval: 10s
-         timeout: 5s
-         retries: 5
-         start_period: 30s
 
    db2:
       image: postgres:16
@@ -48,12 +36,6 @@ services:
          - "5433:5432"
       volumes:
          - movapp_backup_data:/var/lib/postgresql/data
-      healthcheck:
-         test: ["CMD-SHELL", "pg_isready -U admin2 -d MovappBackup"]
-         interval: 10s
-         timeout: 5s
-         retries: 5
-         start_period: 30s
 
 volumes:
    movapp_db_data:
