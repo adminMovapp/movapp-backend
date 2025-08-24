@@ -4,6 +4,9 @@ import cors from "cors";
 import { initTables } from "./models/tables.js";
 import pagosRouter from "./routes/payments.js";
 
+// ✅ AGREGAR AQUÍ - antes de crear la app
+process.env.TZ = "America/Mexico_City";
+
 const app = express();
 
 if (process.env.NODE_ENV !== "production") {
@@ -48,4 +51,13 @@ app.listen(PORT, () => {
    console.log("accessToken:", ACCESS_TOKEN);
    console.log("APP_BASE_URL:", APP_BASE_URL);
    console.log("MERCADOPAGO_URL_WEBHOOK:", MERCADOPAGO_URL_WEBHOOK);
+   console.log(`---------------------------`);
+
+   console.log("NODE_ENV actual:", process.env.NODE_ENV);
+
+   console.log(`---------------------------`);
+
+   // ✅ AHORA YA MOSTRARÁ LA HORA CORRECTA
+   console.log("Zona horaria:", process.env.TZ);
+   console.log("Fecha/hora:", new Date().toLocaleString());
 });
