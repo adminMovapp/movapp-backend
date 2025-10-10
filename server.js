@@ -40,7 +40,7 @@ app.get("/status-api", (req, res) => {
 
 app.use("/payments", pagosRouter);
 
-initTables();
+// initTables();  // Descomentar esta línea SOLO LA PRIMERA VEZ para crear las tablas en la base de datos
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);

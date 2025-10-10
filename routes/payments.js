@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { crearPreferencia, obtenerDetallePago } from "../services/mercadopago.js";
-import { crearPedido, actualizarEstadoPedido, obtenerPedidos, obtenerPedidosPagos } from "../dao/PedidoDAO.js";
+import {
+   crearPedido,
+   actualizarEstadoPedido,
+   obtenerPedidos,
+   obtenerPedidosPagos,
+   obtenerPedidosPorFechas,
+} from "../dao/PedidoDAO.js";
 import { registrarPago, obtenerPagos } from "../dao/PagoDAO.js";
 import { encryptData, decryptData } from "../utils/crypto.js";
 
@@ -95,4 +101,19 @@ router.get("/pedidos-pagos", async (req, res) => {
       res.status(500).json({ error: "Error al obtener pagos" });
    }
 });
+
+router.get("/pedidos-fechas", async (req, res) => {
+   const { fechaInicio, fechaFin } = req.query;
+   if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ error: "Se requieren fechaInicio y fechaFin" });
+   }
+   try {
+      const pedidosPagos = await obtenerPedidosPorFechas(fechaInicio, fechaFin);
+      console.log(pedidosPagos);
+      res.json(pedidosPagos);
+   } catch (error) {
+      res.status(500).json({ error: "Error al obtener pedidos y pagos por fechas" });
+   }
+});
+
 export default router;

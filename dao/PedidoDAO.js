@@ -53,3 +53,34 @@ export const obtenerPedidosPagos = async () => {
                                  ORDER BY PED.id `);
    return result.rows;
 };
+
+export const obtenerPedidosPorFechas = async (fechaInicio, fechaFin) => {
+   const fechaInicioConHora = fechaInicio + " 00:00:00";
+   const fechaFinConHora = fechaFin + " 23:59:59";
+
+   const result = await query(
+      `SELECT PED.id AS idPedido,
+               (PED.nombre || ' ' || PED.apellidos) AS Nombre, 
+               PED.correo, 
+               PED.telefono,
+               PED.cantidad,
+               PED.precio_unitario,
+               PED.total,
+               PED.pais,
+               PED.estatus_pago,
+               PED.fecha_registro,
+               PAG.id_pago_mp,
+               PAG.estado,
+               PAG.monto,
+               PAG.metodo_pago,
+               PAG.tipo_pago,
+               PAG.moneda,
+               PAG.fecha_registro AS fecha_pago
+         FROM pedidos PED
+         INNER JOIN pagos PAG ON (PED.id = PAG.pedido_id)
+         WHERE PED.fecha_registro BETWEEN $1 AND $2
+         ORDER BY PED.id;`,
+      [fechaInicioConHora, fechaFinConHora],
+   );
+   return result.rows ?? [];
+};
