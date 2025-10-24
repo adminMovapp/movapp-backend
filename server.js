@@ -4,9 +4,9 @@ import cors from "cors";
 import { initTables } from "./models/tables.js";
 import pagosRouter from "./routes/payments.js";
 
-// ✅ AGREGAR AQUÍ - antes de crear la app
-process.env.TZ = "America/Mexico_City";
+import authRouter from "./routes/auth.js";
 
+process.env.TZ = "America/Mexico_City";
 const app = express();
 
 if (process.env.NODE_ENV !== "production") {
@@ -39,8 +39,9 @@ app.get("/status-api", (req, res) => {
 });
 
 app.use("/payments", pagosRouter);
+app.use("/auth", authRouter);
 
-initTables();
+// initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
@@ -48,13 +49,11 @@ app.listen(PORT, () => {
    console.log(`---------------------------`);
 
    // Logs con constantes
-   console.log("accessToken:", ACCESS_TOKEN);
-   console.log("APP_BASE_URL:", APP_BASE_URL);
-   console.log("MERCADOPAGO_URL_WEBHOOK:", MERCADOPAGO_URL_WEBHOOK);
+   // console.log("accessToken:", ACCESS_TOKEN);
+   // console.log("APP_BASE_URL:", APP_BASE_URL);
+   // console.log("MERCADOPAGO_URL_WEBHOOK:", MERCADOPAGO_URL_WEBHOOK);
    console.log(`---------------------------`);
-
    console.log("NODE_ENV actual:", process.env.NODE_ENV);
-
    console.log(`---------------------------`);
 
    // ✅ AHORA YA MOSTRARÁ LA HORA CORRECTA
