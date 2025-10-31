@@ -3,15 +3,18 @@ import crypto from "crypto";
 import { AuthDAO } from "../dao/authDAO.js";
 import { sendEmail } from "../utils/mailer.js";
 import { logAction } from "../utils/logger.js";
+import { hashPassword, validatePassword, decryptAES } from "../utils/authUtils.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_EXP_DAYS = 30;
 const RESET_EXP_HOURS = 1;
 
 function generateAccessToken(user) {
-   console.log("\x1b[35m", "generateAccessToken", user);
-
-   return jwt.sign({ id: user.user_uuid, email: user.email }, JWT_SECRET, { expiresIn: "15m" });
+   return jwt.sign(
+      { id: user.user_uuid, email: user.email, telefono: user.telefono, nombre: user.nombre },
+      JWT_SECRET,
+      { expiresIn: "15m" },
+   );
 }
 function generateRefreshToken() {
    return crypto.randomBytes(64).toString("hex");
@@ -19,7 +22,8 @@ function generateRefreshToken() {
 
 export const AuthController = {
    registerUser: async (req, res) => {
-      const { nombre, email, telefono, pais_id, cp, password, deviceId, platform, model, appVersion } = req.body;
+      const { nombre, email, telefono, pais_id, cp, password, deviceId, device, platform, model, appVersion } =
+         req.body;
 
       try {
          const existing = await AuthDAO.findUserByEmail(email);
@@ -27,13 +31,19 @@ export const AuthController = {
             return res.status(400).json({ success: false, message: "Usuario ya registrado" });
          }
 
-         const user = await AuthDAO.insertUser({ nombre, email, telefono, pais_id, cp, password });
+         const plainPassword = password && password.startsWith("U2F") ? decryptAES(password) : password;
+         const hashedPassword = await hashPassword(plainPassword);
 
-         let device = null;
+         const user = await AuthDAO.insertUser({ nombre, email, telefono, pais_id, cp, password: hashedPassword });
+
+         let deviceResp = null;
+         let refreshHash = null;
+
          if (deviceId) {
-            const refreshHash = crypto.randomBytes(64).toString("hex");
-            device = await AuthDAO.upsertDevice({
+            refreshHash = crypto.randomBytes(64).toString("hex");
+            deviceResp = await AuthDAO.upsertDevice({
                deviceId,
+               device,
                platform,
                model,
                appVersion,
@@ -60,22 +70,27 @@ export const AuthController = {
             userAgent: req.headers["user-agent"],
          });
 
-         res.status(201).json({ success: true, user, accessToken, device });
+         res.status(201).json({ success: true, user, accessToken, device: deviceResp });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
+
          await AuthDAO.insertAuditLog({ deviceId, action: "registerUser", success: false, ip: req.ip });
          res.status(500).json({ success: false, message: "Error al registrar usuario" });
       }
    },
 
    loginUser: async (req, res) => {
-      const { email, password, deviceId, platform, model, appVersion } = req.body;
+      const { email, password, deviceId, device, platform, model, appVersion } = req.body;
 
       try {
          const user = await AuthDAO.findUserByEmail(email);
-         if (!user || user.password !== password) {
+         if (!user) return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+
+         const plainPassword = password && password.startsWith("U2F") ? decryptAES(password) : password;
+         const valid = await validatePassword(plainPassword, user.password);
+         if (!valid) {
             await logAction({
-               userId: user ? user.id : null,
+               userId: user.id,
                deviceId,
                action: "loginUser",
                success: false,
@@ -85,11 +100,14 @@ export const AuthController = {
             return res.status(401).json({ success: false, message: "Credenciales inválidas" });
          }
 
-         let device = null;
+         let deviceResp = null;
+         let refreshHash = null;
+
          if (deviceId) {
-            const refreshHash = crypto.randomBytes(64).toString("hex");
-            device = await AuthDAO.upsertDevice({
+            refreshHash = crypto.randomBytes(64).toString("hex");
+            deviceResp = await AuthDAO.upsertDevice({
                deviceId,
+               device,
                platform,
                model,
                appVersion,
@@ -116,9 +134,9 @@ export const AuthController = {
             userAgent: req.headers["user-agent"],
          });
 
-         res.json({ success: true, user, accessToken, device });
+         res.json({ success: true, user, accessToken, device: deviceResp });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
          await logAction({ action: "loginUser", success: false, ip: req.ip });
          res.status(500).json({ success: false, message: "Error al iniciar sesión" });
       }
@@ -136,7 +154,7 @@ export const AuthController = {
          const accessToken = generateAccessToken(user);
          res.json({ success: true, accessToken });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
          res.status(500).json({ success: false, message: "Error al refrescar token" });
       }
    },
@@ -156,7 +174,7 @@ export const AuthController = {
 
          res.json({ success: true, message: "Dispositivo revocado" });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
          await AuthDAO.insertAuditLog({ action: "revokeDevice", success: false, ip: req.ip });
          res.status(500).json({ success: false, message: "Error al revocar dispositivo" });
       }
@@ -179,7 +197,7 @@ export const AuthController = {
 
          res.json({ success: true, message: "Correo de recuperación enviado" });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
          res.status(500).json({ success: false, message: "Error al enviar correo" });
       }
    },
@@ -195,7 +213,7 @@ export const AuthController = {
 
          res.json({ success: true, message: "Contraseña restablecida" });
       } catch (err) {
-         console.error(err);
+         console.log("\x1b[31m", "Error", err);
          res.status(500).json({ success: false, message: "Error al restablecer contraseña" });
       }
    },

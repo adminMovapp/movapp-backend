@@ -2,9 +2,10 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { initTables } from "./models/tables.js";
-import pagosRouter from "./routes/payments.js";
 
+import configRouter from "./routes/config.js";
 import authRouter from "./routes/auth.js";
+import pagosRouter from "./routes/payments.js";
 
 process.env.TZ = "America/Mexico_City";
 const app = express();
@@ -26,9 +27,9 @@ const PORT = process.env.PORT || 3000;
 const DB_PORT = process.env.PG_PORT || 5432;
 
 // Constantes para MercadoPago y URLs
-const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const APP_BASE_URL = process.env.APP_BASE_URL;
-const MERCADOPAGO_URL_WEBHOOK = process.env.MERCADOPAGO_URL_WEBHOOK;
+// const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+// const APP_BASE_URL = process.env.APP_BASE_URL;
+// const MERCADOPAGO_URL_WEBHOOK = process.env.MERCADOPAGO_URL_WEBHOOK;
 
 app.get("/status-api", (req, res) => {
    res.status(200).json({
@@ -40,6 +41,7 @@ app.get("/status-api", (req, res) => {
 
 app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
+app.use("/config", configRouter);
 
 // initTables();
 
@@ -56,7 +58,6 @@ app.listen(PORT, () => {
    console.log("NODE_ENV actual:", process.env.NODE_ENV);
    console.log(`---------------------------`);
 
-   // ✅ AHORA YA MOSTRARÁ LA HORA CORRECTA
    console.log("Zona horaria:", process.env.TZ);
    console.log("Fecha/hora:", new Date().toLocaleString());
 });

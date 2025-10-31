@@ -27,11 +27,6 @@ export const AuthDAO = {
       return result.rows[0];
    },
 
-   findUserBasicByEmail: async (email) => {
-      const result = await query("SELECT id, nombre, email FROM Usuarios WHERE email = $1", [email]);
-      return result.rows[0];
-   },
-
    insertUser: async ({ nombre, email, telefono, pais_id, cp, password }) => {
       const result = await query(
          `INSERT INTO Usuarios (nombre, email, telefono, pais_id, cp, password)
@@ -42,10 +37,10 @@ export const AuthDAO = {
       return result.rows[0];
    },
 
-   upsertDevice: async ({ deviceId, platform, model, appVersion, userId, refresh_hash = null }) => {
+   upsertDevice: async ({ deviceId, device, platform, model, appVersion, userId, refresh_hash = null }) => {
       const result = await query(
-         `INSERT INTO Dispositivos (device_id, platform, model, app_version, user_id, refresh_hash)
-             VALUES ($1,$2,$3,$4,$5,$6)
+         `INSERT INTO Dispositivos (device_id, device, platform, model, app_version, user_id, refresh_hash)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)
                 ON CONFLICT (device_id) DO UPDATE SET
                     platform = EXCLUDED.platform,
                     model = EXCLUDED.model,
@@ -54,7 +49,7 @@ export const AuthDAO = {
          refresh_hash = COALESCE(EXCLUDED.refresh_hash, Dispositivos.refresh_hash),
          last_seen_at = CURRENT_TIMESTAMP
        RETURNING id, device_id, user_id, refresh_hash`,
-         [deviceId, platform, model, appVersion, userId, refresh_hash],
+         [deviceId, device, platform, model, appVersion, userId, refresh_hash],
       );
       return result.rows[0];
    },

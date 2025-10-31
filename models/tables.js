@@ -1,8 +1,7 @@
 import { query } from "../db/index.js";
 
 export async function initTables() {
-   console.log("🧩 Iniciando creación de tablas...");
-
+   console.log("\x1b[32m", "Iniciando creación de tablas...");
    // ============================================
    // FUNCIONES Y TRIGGERS GLOBALES
    // ============================================
@@ -27,21 +26,24 @@ export async function initTables() {
         pais VARCHAR(100) NOT NULL,
         moneda VARCHAR(3) NOT NULL,
         simbolo VARCHAR(5) NOT NULL,
+        codigo_telefono VARCHAR(10) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        activo BOOLEAN DEFAULT TRUE
+
     );
     CREATE INDEX idx_paises_codigo ON Paises(codigo_pais);
   `);
 
    await query(`
-    INSERT INTO Paises (codigo_pais, pais, moneda, simbolo) VALUES
-      ('MX', 'México', 'MXN', '$'),
-      ('PE', 'Perú', 'PEN', 'S/'),
-      ('CO', 'Colombia', 'COP', '$'),
-      ('EC', 'Ecuador', 'USD', '$'),
-      ('BO', 'Bolivia', 'BOB', '$'),
-      ('AR', 'Argentina', 'ARS', '$'),
-      ('CL', 'Chile', 'CLP', '$');
+    INSERT INTO Paises (codigo_pais, pais, moneda, simbolo, codigo_telefono) VALUES
+        ('MX', 'México', 'MXN', '$', '+52'),
+        ('PE', 'Perú', 'PEN', 'S/', '+51'),
+        ('CO', 'Colombia', 'COP', '$', '+57'),
+        ('EC', 'Ecuador', 'USD', '$', '+593'),
+        ('BO', 'Bolivia', 'BOB', 'Bs', '+591'),
+        ('AR', 'Argentina', 'ARS', '$', '+54'),
+        ('CL', 'Chile', 'CLP', '$', '+56');
   `);
 
    await query(`
@@ -165,6 +167,7 @@ export async function initTables() {
         device_id VARCHAR(255) NOT NULL UNIQUE,
         user_id INTEGER NOT NULL REFERENCES Usuarios(id) ON DELETE CASCADE,
         refresh_hash VARCHAR(256) NOT NULL,
+        device VARCHAR(200),
         platform VARCHAR(50),
         model VARCHAR(200),
         app_version VARCHAR(50),
@@ -298,5 +301,5 @@ export async function initTables() {
     CREATE INDEX idx_pagos_ml_pedido_id ON Pagos_ML(pedido_id);
   `);
 
-   console.log("\x1b[32m", "✅ Todas las tablas, índices y triggers fueron creados correctamente.");
+   console.log("\x1b[32m", "Todas las tablas, índices y triggers fueron creados correctamente.");
 }

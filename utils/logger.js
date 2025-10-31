@@ -4,6 +4,6 @@ export async function logAction({ userId = null, deviceId = null, action, messag
    try {
       await AuthDAO.insertAuditLog({ userId, deviceId, action, message, success });
    } catch (err) {
-      console.error("Error logging action", err);
+      console.log("\x1b[31m", "Error", err);
    }
 }

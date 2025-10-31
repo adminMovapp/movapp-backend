@@ -1,6 +1,7 @@
 // utils/authUtils.js
 import crypto from "crypto";
 import CryptoJS from "crypto-js";
+import bcrypt from "bcrypt";
 
 const AES_SECRET = process.env.AES_SECRET || "";
 
@@ -22,4 +23,15 @@ export function decryptAES(ciphertext) {
    } catch (err) {
       return ciphertext;
    }
+}
+
+/**
+ * Cifra una contraseña con bcrypt
+ */
+export async function hashPassword(password) {
+   return await bcrypt.hash(password, 12);
+}
+
+export async function validatePassword(plain, hashed) {
+   return await bcrypt.compare(plain, hashed);
 }

@@ -18,10 +18,11 @@ const validateAuthSchema = {
       body("cp").optional().isString().isLength({ min: 3, max: 20 }).withMessage("Código postal inválido"),
       body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
 
-      body("deviceId").optional().isString().withMessage("deviceId debe ser string"),
-      body("platform").optional().isString().withMessage("platform debe ser string"),
-      body("model").optional().isString().withMessage("model debe ser string"),
-      body("appVersion").optional().isString().withMessage("appVersion debe ser string"),
+      body("deviceId").notEmpty().isString().withMessage("deviceId debe ser string"),
+      body("device").notEmpty().isString().withMessage("device debe ser string"),
+      body("platform").notEmpty().isString().withMessage("platform debe ser string"),
+      body("model").notEmpty().isString().withMessage("model debe ser string"),
+      body("appVersion").notEmpty().isString().withMessage("appVersion debe ser string"),
 
       handleValidationErrors,
    ],
@@ -30,16 +31,19 @@ const validateAuthSchema = {
       body("email").isEmail().withMessage("Correo inválido"),
       body("password").notEmpty().withMessage("La contraseña es requerida"),
 
-      body("deviceId").optional().isString().withMessage("deviceId debe ser string"),
-      body("platform").optional().isString().withMessage("platform debe ser string"),
-      body("model").optional().isString().withMessage("model debe ser string"),
-      body("appVersion").optional().isString().withMessage("appVersion debe ser string"),
+      body("deviceId").notEmpty().isString().withMessage("deviceId debe ser string"),
+
+      body("device").notEmpty().isString().withMessage("device debe ser string"),
+      body("platform").notEmpty().isString().withMessage("platform debe ser string"),
+      body("model").notEmpty().isString().withMessage("model debe ser string"),
+      body("appVersion").notEmpty().isString().withMessage("appVersion debe ser string"),
 
       handleValidationErrors,
    ],
 
    registerDevice: [
       body("deviceId").notEmpty().withMessage("deviceId requerido"),
+      body("device").optional().isString(),
       body("platform").optional().isString(),
       body("model").optional().isString(),
       body("appVersion").optional().isString(),
