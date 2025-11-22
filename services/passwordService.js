@@ -8,7 +8,7 @@ import { generateResetCode, hashPassword } from "../utils/authUtils.js";
 import { AuthService } from "./authService.js";
 
 const RESET_CODE_EXP_MINUTES = 5;
-const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = 3;
 const WINDOW_MINUTES = 60;
 
 export const PasswordService = {
