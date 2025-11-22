@@ -63,10 +63,11 @@ const validateAuthSchema = {
       handleValidationErrors,
    ],
 
-   sendRecoveryEmail: [body("email").isEmail().withMessage("Correo inválido"), handleValidationErrors],
+   sendRecoveryPassword: [body("email").isEmail().withMessage("Correo inválido"), handleValidationErrors],
 
    resetPassword: [
-      body("token").notEmpty().withMessage("Token requerido"),
+      body("email").isEmail().withMessage("Correo electrónico inválido"),
+      body("code").notEmpty().isString().withMessage("El código de recuperación es requerido"),
       body("password").isLength({ min: 6 }).withMessage("La nueva contraseña debe tener al menos 6 caracteres"),
       handleValidationErrors,
    ],

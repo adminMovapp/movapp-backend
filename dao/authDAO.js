@@ -121,8 +121,13 @@ export const AuthDAO = {
       await query(`UPDATE Usuarios SET password = $1 WHERE id = $2`, [password, userId]);
    },
 
-   deletePasswordResetsByUser: async (userId) => {
-      await query(`DELETE FROM Password_Reset_Tokens WHERE user_id = $1`, [userId]);
+   updatePasswordResetsByUser: async (userId, code) => {
+      await query(
+         `UPDATE Password_Reset_Tokens
+       SET used = TRUE, updated_at = NOW()
+       WHERE user_id = $1 AND token_hash = $2 AND used = FALSE`,
+         [userId, code],
+      );
    },
 
    revokeDeviceById: async (deviceIdentifier) => {
@@ -161,5 +166,33 @@ export const AuthDAO = {
    findUserById: async (userId) => {
       const result = await query("SELECT * FROM Usuarios WHERE id = $1", [userId]);
       return result.rows[0];
+   },
+   findUserByEmailAndUuid: async (email, user_uuid) => {
+      const result = await query("SELECT * FROM Usuarios WHERE email = $1 AND user_uuid = $2", [email, user_uuid]);
+      return result.rows[0];
+   },
+   findPasswordResetByCode: async (userId, code) => {
+      const result = await query(
+         `SELECT * FROM Password_Reset_Tokens
+       WHERE user_id = $1
+         AND token_hash = $2
+         AND expires_at > NOW()
+         AND used = FALSE
+       LIMIT 1`,
+         [userId, code],
+      );
+      return result.rows[0];
+   },
+
+   countRecentPasswordResetAttempts: async (userId, windowMinutes = 60) => {
+      const result = await query(
+         `SELECT COUNT(*) FROM password_reset_tokens
+       WHERE user_id = $1
+         AND used = FALSE
+         AND expires_at > NOW()
+         AND created_at > NOW() - INTERVAL '${windowMinutes} minutes'`,
+         [userId],
+      );
+      return parseInt(result.rows[0].count, 10);
    },
 };

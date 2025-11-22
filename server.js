@@ -43,7 +43,7 @@ app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
 
-// initTables();
+//initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
@@ -60,4 +60,6 @@ app.listen(PORT, () => {
 
    console.log("Zona horaria:", process.env.TZ);
    console.log("Fecha/hora:", new Date().toLocaleString());
+
+   console.log(`---------------------------`);
 });

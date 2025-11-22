@@ -35,3 +35,21 @@ export async function hashPassword(password) {
 export async function validatePassword(plain, hashed) {
    return await bcrypt.compare(plain, hashed);
 }
+
+export function generateResetCode(length = 5) {
+   const chars = "ABCDEFGHIJKLMNPQRSTUVWXYZ123456789";
+   let code = "";
+   for (let i = 0; i < length; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+   }
+   return code;
+}
+
+export function sendSessionResponse(res, { user, accessToken, device }) {
+   res.json({
+      success: true,
+      user,
+      accessToken,
+      device,
+   });
+}

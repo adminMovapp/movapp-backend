@@ -1,220 +1,119 @@
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import { AuthDAO } from "../dao/authDAO.js";
-import { sendEmail } from "../utils/mailer.js";
-import { logAction } from "../utils/logger.js";
-import { hashPassword, validatePassword, decryptAES } from "../utils/authUtils.js";
+// ============================================
+// controllers/authController.js
+// ============================================
+import { AuthService } from "../services/authService.js";
+import { PasswordService } from "../services/passwordService.js";
+import { sendSessionResponse } from "../utils/authUtils.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_EXP_DAYS = 30;
-const RESET_EXP_HOURS = 1;
+const ERROR_MESSAGES = {
+   USER_ALREADY_EXISTS: "Usuario ya registrado",
+   INVALID_CREDENTIALS: "Credenciales inválidas",
+   USER_NOT_FOUND: "Usuario no encontrado",
+   INVALID_REFRESH_TOKEN: "Refresh token inválido o expirado",
+   INVALID_OR_EXPIRED_CODE: "Código inválido o expirado",
+   INVALID_CURRENT_PASSWORD: "Contraseña actual incorrecta",
+   TOO_MANY_ATTEMPTS:
+      "Has solicitado demasiados códigos de recuperación. Por favor, espera antes de volver a intentarlo.",
+};
 
-function generateAccessToken(user) {
-   return jwt.sign(
-      { id: user.user_uuid, email: user.email, telefono: user.telefono, nombre: user.nombre },
-      JWT_SECRET,
-      { expiresIn: "15m" },
-   );
+function getRequestInfo(req) {
+   return {
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+   };
 }
-function generateRefreshToken() {
-   return crypto.randomBytes(64).toString("hex");
+
+function handleError(res, error) {
+   console.log("\x1b[31m", "Error:", error);
+   const message = ERROR_MESSAGES[error.message] || "Error en el servidor";
+   const status = error.message === "INVALID_CREDENTIALS" ? 401 : 500;
+   res.status(status).json({ success: false, message });
 }
 
 export const AuthController = {
-   registerUser: async (req, res) => {
-      const { nombre, email, telefono, pais_id, cp, password, deviceId, device, platform, model, appVersion } =
-         req.body;
-
+   async registerUser(req, res) {
       try {
-         const existing = await AuthDAO.findUserByEmail(email);
-         if (existing) {
-            return res.status(400).json({ success: false, message: "Usuario ya registrado" });
-         }
+         const { nombre, email, telefono, pais_id, cp, password } = req.body;
+         const { deviceId, device, platform, model, appVersion } = req.body;
 
-         const plainPassword = password && password.startsWith("U2F") ? decryptAES(password) : password;
-         const hashedPassword = await hashPassword(plainPassword);
+         const result = await AuthService.register(
+            { nombre, email, telefono, pais_id, cp, password },
+            { deviceId, device, platform, model, appVersion },
+            getRequestInfo(req),
+         );
 
-         const user = await AuthDAO.insertUser({ nombre, email, telefono, pais_id, cp, password: hashedPassword });
-
-         let deviceResp = null;
-         let refreshHash = null;
-
-         if (deviceId) {
-            refreshHash = crypto.randomBytes(64).toString("hex");
-            deviceResp = await AuthDAO.upsertDevice({
-               deviceId,
-               device,
-               platform,
-               model,
-               appVersion,
-               userId: user.id,
-               refresh_hash: refreshHash,
-            });
-
-            await AuthDAO.insertRefreshToken({
-               userId: user.id,
-               deviceId: device.id,
-               tokenHash: refreshHash,
-               expiresAt: new Date(Date.now() + REFRESH_EXP_DAYS * 24 * 60 * 60 * 1000),
-            });
-         }
-
-         const accessToken = generateAccessToken(user);
-
-         await logAction({
-            userId: user.id,
-            deviceId,
-            action: "registerUser",
-            success: true,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"],
-         });
-
-         res.status(201).json({ success: true, user, accessToken, device: deviceResp });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-
-         await AuthDAO.insertAuditLog({ deviceId, action: "registerUser", success: false, ip: req.ip });
-         res.status(500).json({ success: false, message: "Error al registrar usuario" });
+         sendSessionResponse(res, result);
+      } catch (error) {
+         handleError(res, error);
       }
    },
 
-   loginUser: async (req, res) => {
-      const { email, password, deviceId, device, platform, model, appVersion } = req.body;
-
+   async loginUser(req, res) {
       try {
-         const user = await AuthDAO.findUserByEmail(email);
-         if (!user) return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+         const { email, password } = req.body;
+         const { deviceId, device, platform, model, appVersion } = req.body;
 
-         const plainPassword = password && password.startsWith("U2F") ? decryptAES(password) : password;
-         const valid = await validatePassword(plainPassword, user.password);
-         if (!valid) {
-            await logAction({
-               userId: user.id,
-               deviceId,
-               action: "loginUser",
-               success: false,
-               ip: req.ip,
-               userAgent: req.headers["user-agent"],
-            });
-            return res.status(401).json({ success: false, message: "Credenciales inválidas" });
-         }
+         const result = await AuthService.login(
+            { email, password },
+            { deviceId, device, platform, model, appVersion },
+            getRequestInfo(req),
+         );
 
-         let deviceResp = null;
-         let refreshHash = null;
-
-         if (deviceId) {
-            refreshHash = crypto.randomBytes(64).toString("hex");
-            deviceResp = await AuthDAO.upsertDevice({
-               deviceId,
-               device,
-               platform,
-               model,
-               appVersion,
-               userId: user.id,
-               refresh_hash: refreshHash,
-            });
-
-            await AuthDAO.insertRefreshToken({
-               userId: user.id,
-               deviceId: device.id,
-               tokenHash: refreshHash,
-               expiresAt: new Date(Date.now() + REFRESH_EXP_DAYS * 24 * 60 * 60 * 1000),
-            });
-         }
-
-         const accessToken = generateAccessToken(user);
-
-         await logAction({
-            userId: user.id,
-            deviceId,
-            action: "loginUser",
-            success: true,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"],
-         });
-
-         res.json({ success: true, user, accessToken, device: deviceResp });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-         await logAction({ action: "loginUser", success: false, ip: req.ip });
-         res.status(500).json({ success: false, message: "Error al iniciar sesión" });
+         sendSessionResponse(res, result);
+      } catch (error) {
+         handleError(res, error);
       }
    },
 
-   refreshToken: async (req, res) => {
-      const { refreshToken, deviceId } = req.body;
+   async refreshToken(req, res) {
       try {
-         const tokenRow = await AuthDAO.findRefreshToken({ tokenHash: refreshToken, deviceId });
-         if (!tokenRow) return res.status(401).json({ message: "Refresh token inválido o expirado" });
-
-         const user = await AuthDAO.findUserById(tokenRow.user_id);
-         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-
-         const accessToken = generateAccessToken(user);
-         res.json({ success: true, accessToken });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-         res.status(500).json({ success: false, message: "Error al refrescar token" });
+         const { refreshToken, deviceId } = req.body;
+         const result = await AuthService.refreshAccessToken(refreshToken, deviceId);
+         res.json({ success: true, ...result });
+      } catch (error) {
+         handleError(res, error);
       }
    },
 
-   revokeDevice: async (req, res) => {
-      const { deviceId } = req.body;
+   async revokeDevice(req, res) {
       try {
-         await AuthDAO.revokeDeviceById(deviceId);
-
-         await AuthDAO.insertAuditLog({
-            deviceId,
-            action: "revokeDevice",
-            success: true,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"],
-         });
-
+         const { deviceId } = req.body;
+         await AuthService.revokeDevice(deviceId, getRequestInfo(req));
          res.json({ success: true, message: "Dispositivo revocado" });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-         await AuthDAO.insertAuditLog({ action: "revokeDevice", success: false, ip: req.ip });
-         res.status(500).json({ success: false, message: "Error al revocar dispositivo" });
+      } catch (error) {
+         handleError(res, error);
       }
    },
 
-   sendRecoveryEmail: async (req, res) => {
-      const { email } = req.body;
+   async sendRecoveryPassword(req, res) {
       try {
-         const user = await AuthDAO.findUserByEmail(email);
-         if (!user) return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+         const { email } = req.body;
 
-         const token = generateRefreshToken(); // token aleatorio
-         await AuthDAO.insertPasswordReset({
-            userId: user.id,
-            tokenHash: token,
-            expiresAt: new Date(Date.now() + RESET_EXP_HOURS * 60 * 60 * 1000),
-         });
-
-         await sendEmail(email, "Recuperar contraseña", `Usa este token para restablecer: ${token}`);
-
+         // console.log("\x1b[37m", "sendRecoveryPassword:", email);
+         await PasswordService.sendRecoveryCode(email);
          res.json({ success: true, message: "Correo de recuperación enviado" });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-         res.status(500).json({ success: false, message: "Error al enviar correo" });
+      } catch (error) {
+         handleError(res, error);
       }
    },
 
-   resetPassword: async (req, res) => {
-      const { token, password } = req.body;
+   async resetPassword(req, res) {
       try {
-         const tokenRow = await AuthDAO.findPasswordReset(token);
-         if (!tokenRow) return res.status(400).json({ success: false, message: "Token inválido o expirado" });
+         const { email, code, password } = req.body;
+         const { deviceId, device, platform, model, appVersion } = req.body;
 
-         await AuthDAO.updateUserPassword({ userId: tokenRow.user_id, password });
-         await AuthDAO.deletePasswordResetsByUser(tokenRow.user_id);
+         const result = await PasswordService.resetPassword(
+            email,
 
-         res.json({ success: true, message: "Contraseña restablecida" });
-      } catch (err) {
-         console.log("\x1b[31m", "Error", err);
-         res.status(500).json({ success: false, message: "Error al restablecer contraseña" });
+            code,
+            password,
+            { deviceId, device, platform, model, appVersion },
+            getRequestInfo(req),
+         );
+
+         sendSessionResponse(res, result);
+      } catch (error) {
+         handleError(res, error);
       }
    },
 };
