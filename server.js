@@ -6,6 +6,7 @@ import { initTables } from "./models/tables.js";
 import configRouter from "./routes/config.js";
 import authRouter from "./routes/auth.js";
 import pagosRouter from "./routes/payments.js";
+import paymentsStripeRouter from "./routes/paymentsStripe.js";
 
 process.env.TZ = "America/Mexico_City";
 const app = express();
@@ -20,7 +21,14 @@ app.use(
    }),
 );
 
-app.use(express.json());
+app.use(
+   express.json({
+      verify: (req, res, buf) => {
+         req.rawBody = buf;
+      },
+   }),
+);
+app.use(express.urlencoded({ extended: true }));
 
 // Constantes para puertos y configuración
 const PORT = process.env.PORT || 3000;
@@ -42,6 +50,7 @@ app.get("/status-api", (req, res) => {
 app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
+app.use("/payments/stripe", paymentsStripeRouter);
 
 //initTables();
 

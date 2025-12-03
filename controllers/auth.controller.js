@@ -24,7 +24,7 @@ function getRequestInfo(req) {
 }
 
 function handleError(res, error) {
-   console.log("\x1b[31m", "Error:", error);
+   console.error("\x1b[31m", "Error:", error);
    const message = ERROR_MESSAGES[error.message] || "Error en el servidor";
    const status = error.message === "INVALID_CREDENTIALS" ? 401 : 500;
    res.status(status).json({ success: false, message });

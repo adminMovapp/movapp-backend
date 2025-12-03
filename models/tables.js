@@ -138,15 +138,14 @@ export async function initTables() {
         telefono VARCHAR(50),
         pais_id INTEGER NOT NULL REFERENCES Paises(id) ON DELETE CASCADE,
         cp VARCHAR(20),
-        password VARCHAR(300) NOT NULL,
-        reset_token VARCHAR(128),
+        password VARCHAR(300) NOT NULL,       
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         activo BOOLEAN DEFAULT TRUE
     );
     CREATE INDEX idx_Usuarios_pais ON Usuarios(pais_id);
     CREATE INDEX idx_Usuarios_email ON Usuarios(email);
-    CREATE INDEX idx_Usuarios_reset_token ON Usuarios(reset_token);
+
   `);
 
    await query(`
@@ -299,6 +298,30 @@ export async function initTables() {
         fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     CREATE INDEX idx_pagos_ml_pedido_id ON Pagos_ML(pedido_id);
+  `);
+
+   // ============================================
+   // TABLAS pagos_stripe (stripe)
+   // ============================================
+   await query(`
+    DROP TABLE IF EXISTS pagos_stripe CASCADE;
+      CREATE TABLE IF NOT EXISTS pagos_stripe (
+      id              SERIAL PRIMARY KEY,
+      user_id         INTEGER,
+      email           TEXT,
+      amount_cents    INTEGER NOT NULL,
+      currency        VARCHAR(10) NOT NULL,
+      description     TEXT,
+      intent_id       VARCHAR(255) UNIQUE NOT NULL,
+      gateway         VARCHAR(50) NOT NULL DEFAULT 'stripe',
+      status          VARCHAR(100),
+      observations    VARCHAR(100),
+      metadata        JSONB,
+      created_at      TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+      updated_at      TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE INDEX idx_pagos_stripe_intent_id ON pagos_stripe(intent_id);
   `);
 
    console.log("\x1b[32m", "Todas las tablas, índices y triggers fueron creados correctamente.");

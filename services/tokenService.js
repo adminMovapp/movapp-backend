@@ -6,8 +6,8 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const ACCESS_TOKEN_EXP = "15m";
-export const REFRESH_EXP_DAYS = 30;
+const ACCESS_TOKEN_EXP = "5m";
+const REFRESH_EXP_DAYS = 30;
 
 export const TokenService = {
    /**
@@ -17,9 +17,9 @@ export const TokenService = {
       return jwt.sign(
          {
             id: user.user_uuid,
-            email: user.email,
-            telefono: user.telefono,
-            nombre: user.nombre,
+            // email: user.email,
+            // telefono: user.telefono,
+            // nombre: user.nombre,
          },
          JWT_SECRET,
          { expiresIn: ACCESS_TOKEN_EXP },

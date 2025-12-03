@@ -22,6 +22,8 @@ export const AuthService = {
          password: hashedPassword,
       });
 
+      // console.log("\x1b[34m", "Nuevo usuario registrado:", user);
+
       const { accessToken, device } = await this.createSession(user, deviceInfo, requestInfo);
 
       await logAction({
@@ -77,6 +79,7 @@ export const AuthService = {
     * Crea una sesión completa (access token + refresh token + dispositivo)
     */
    async createSession(user, deviceInfo, requestInfo) {
+      // console.log("\x1b[35m", "createSession:", user, deviceInfo, requestInfo);
       const accessToken = TokenService.generateAccessToken(user);
 
       const device = deviceInfo?.deviceId

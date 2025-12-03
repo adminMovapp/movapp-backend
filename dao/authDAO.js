@@ -22,11 +22,6 @@ export const AuthDAO = {
       return result.rows[0];
    },
 
-   findUserByPhone: async (telefono) => {
-      const result = await query("SELECT * FROM Usuarios WHERE telefono = $1", [telefono]);
-      return result.rows[0];
-   },
-
    insertUser: async ({ nombre, email, telefono, pais_id, cp, password }) => {
       const result = await query(
          `INSERT INTO Usuarios (nombre, email, telefono, pais_id, cp, password)
@@ -85,36 +80,12 @@ export const AuthDAO = {
       return result.rows[0];
    },
 
-   deleteRefreshTokensByDevice: async (deviceIdentifier) => {
-      const internalId = await resolveDeviceInternalId(deviceIdentifier);
-      if (internalId == null) {
-         await query(
-            `DELETE FROM Refresh_Tokens WHERE device_id IN (SELECT id FROM Dispositivos WHERE device_id = $1)`,
-            [deviceIdentifier],
-         );
-         return;
-      }
-      await query(`DELETE FROM Refresh_Tokens WHERE device_id = $1`, [internalId]);
-   },
-
    insertPasswordReset: async ({ userId, tokenHash, expiresAt }) => {
       await query(
          `INSERT INTO Password_Reset_Tokens (user_id, token_hash, expires_at)
             VALUES ($1,$2,$3)`,
          [userId, tokenHash, expiresAt],
       );
-   },
-
-   findPasswordReset: async (tokenHash) => {
-      const result = await query(
-         `SELECT id, user_id FROM Password_Reset_Tokens
-                WHERE token_hash = $1
-                AND expires_at > NOW()
-                AND used = FALSE
-            LIMIT 1`,
-         [tokenHash],
-      );
-      return result.rows[0];
    },
 
    updateUserPassword: async ({ userId, password }) => {
@@ -167,10 +138,7 @@ export const AuthDAO = {
       const result = await query("SELECT * FROM Usuarios WHERE id = $1", [userId]);
       return result.rows[0];
    },
-   findUserByEmailAndUuid: async (email, user_uuid) => {
-      const result = await query("SELECT * FROM Usuarios WHERE email = $1 AND user_uuid = $2", [email, user_uuid]);
-      return result.rows[0];
-   },
+
    findPasswordResetByCode: async (userId, code) => {
       const result = await query(
          `SELECT * FROM Password_Reset_Tokens

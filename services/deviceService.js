@@ -18,15 +18,12 @@ export const DeviceService = {
       const deviceResp = await AuthDAO.upsertDevice({
          deviceId,
          device,
-
          platform,
          model,
          appVersion,
          userId,
          refresh_hash: refreshHash,
       });
-
-      // console.log("\x1b[34m", "deviceResp:", deviceResp);
 
       await AuthDAO.insertRefreshToken({
          userId,

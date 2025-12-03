@@ -15,7 +15,7 @@ transporter.verify((error, success) => {
    if (error) {
       console.error("\x1b[31m%s\x1b[0m", "❌ Error en configuración SMTP:", error.message);
    } else {
-      console.log("\x1b[32m%s\x1b[0m", "✅ Servidor SMTP listo para enviar correos");
+      console.log("\x1b[35m%s\x1b[0m", "✅ Servidor SMTP listo para enviar correos");
    }
 });
 
@@ -30,8 +30,8 @@ export async function sendEmail({ to, subject, html, text }) {
          text: plainText,
       });
 
-      console.log("\x1b[32m%s\x1b[0m", `✅ Correo enviado a ${to}`);
-      console.log("\x1b[36m%s\x1b[0m", `   Message ID: ${info.messageId}`);
+      // console.log("\x1b[32m%s\x1b[0m", `✅ Correo enviado a ${to}`);
+      // console.log("\x1b[36m%s\x1b[0m", `   Message ID: ${info.messageId}`);
 
       return info;
    } catch (err) {
