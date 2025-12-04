@@ -309,7 +309,7 @@ export async function initTables() {
       id              SERIAL PRIMARY KEY,
       user_id         INTEGER,
       email           TEXT,
-      amount_cents    INTEGER NOT NULL,
+      amount          NUMERIC(12,2) NOT NULL,
       currency        VARCHAR(10) NOT NULL,
       description     TEXT,
       intent_id       VARCHAR(255) UNIQUE NOT NULL,

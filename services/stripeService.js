@@ -4,7 +4,8 @@ import { PaymentsStripeDAO } from "../dao/paymentsStripeDAO.js";
 export const StripeService = {
    async createPaymentIntent({ userId = null, email, amount, currency = "mxn", description = "", metadata = {} }) {
       try {
-         const amount_cents = Math.round(parseFloat(amount) * 100);
+         const amount_cents_stripe = Math.round(parseFloat(amount) * 100);
+         const amount_cents = Math.round(parseFloat(amount));
 
          // Build stripeMetadata: only short string values and a truncated summary
          const stripeMetadata = {};
@@ -44,7 +45,7 @@ export const StripeService = {
          }
 
          const intent = await stripe.paymentIntents.create({
-            amount: amount_cents,
+            amount: amount_cents_stripe,
             currency,
             receipt_email: email,
             description,
@@ -59,7 +60,6 @@ export const StripeService = {
             currency,
             description,
             intent_id: intent.id,
-            gateway_payment_id: intent.id,
             status: intent.status,
             metadata, // full structured metadata stored in DB
          });
@@ -74,7 +74,7 @@ export const StripeService = {
    async handleStripeEvent(event) {
       try {
          const intent = event.data.object;
-         // console.log("\x1b[36m", "handleStripeEvent STRIPE  =>", event.data.object);
+         // console.log("\x1b[36m", "handleStripeEvent STRIPE  =>", intent);
 
          if (event.type === "payment_intent.succeeded") {
             const chargeId = intent.charges?.data?.[0]?.id || null;

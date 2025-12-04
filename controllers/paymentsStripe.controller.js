@@ -11,10 +11,22 @@ export const PaymentsStripeController = {
             email,
             amount,
             currency = "mxn",
-            description = "",
+            description = " Compra aplicacion MovApp",
             metadata = {},
             items = [],
          } = req.body;
+
+         // console.log(
+         //    "\x1b[36m",
+         //    "createIntent STRIPE  =>",
+         //    userId,
+         //    email,
+         //    amount,
+         //    currency,
+         //    description,
+         //    metadata,
+         //    items,
+         // );
 
          if (!email || !amount)
             return res.status(400).json({ success: false, message: "email y amount son requeridos" });

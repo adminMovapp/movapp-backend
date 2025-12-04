@@ -13,7 +13,7 @@ export const PaymentsStripeDAO = {
    }) => {
       const r = await query(
          `INSERT INTO pagos_stripe
-            (user_id, email, amount_cents, currency, description, intent_id, gateway, status, metadata, created_at, updated_at)
+            (user_id, email, amount, currency, description, intent_id, gateway, status, metadata, created_at, updated_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW()) RETURNING *`,
          [userId, email, amount_cents, currency, description, intent_id, "stripe", status, JSON.stringify(metadata)],
       );
