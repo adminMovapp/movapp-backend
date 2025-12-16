@@ -5,6 +5,8 @@ import { ConfigService } from "../services/configService.js";
 export const ConfigController = {
    getCountriesList: async (req, res) => {
       try {
+         console.error("\x1b[35m", "getCountriesList =>");
+
          const countries = await ConfigService.getCountries();
          res.json({ success: true, countries });
       } catch (err) {

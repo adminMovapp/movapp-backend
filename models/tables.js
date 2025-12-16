@@ -324,5 +324,107 @@ export async function initTables() {
     CREATE INDEX idx_pagos_stripe_intent_id ON pagos_stripe(intent_id);
   `);
 
+   // ============================================
+   // TABLA ORDERS (Pedidos/Órdenes)
+   // ============================================
+   await query(`
+    DROP TABLE IF EXISTS Orders CASCADE;
+    CREATE TABLE Orders (
+        id SERIAL PRIMARY KEY,
+        order_number VARCHAR(50) UNIQUE NOT NULL,
+        user_id INTEGER REFERENCES Usuarios(id) ON DELETE SET NULL,
+        email VARCHAR(255),
+        pais_id INTEGER REFERENCES Paises(id) ON DELETE SET NULL,
+        subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+        total NUMERIC(12,2) NOT NULL DEFAULT 0,
+        currency VARCHAR(10) NOT NULL DEFAULT 'MXN',
+        payment_method VARCHAR(50),   
+        payment_status VARCHAR(50) DEFAULT 'pending', 
+        payment_reference VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX idx_orders_order_number ON Orders(order_number);
+    CREATE INDEX idx_orders_user_id ON Orders(user_id);
+    CREATE INDEX idx_orders_created_at ON Orders(created_at);
+  `);
+
+   await query(`
+    DROP TRIGGER IF EXISTS update_orders_updated_at ON Orders;
+    CREATE TRIGGER update_orders_updated_at
+      BEFORE UPDATE ON Orders
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  `);
+
+   // ============================================
+   // TABLA ORDER_DETAILS (Detalle de pedidos)
+   // ============================================
+   await query(`
+    DROP TABLE IF EXISTS Order_Details CASCADE;
+    CREATE TABLE Order_Details (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER NOT NULL REFERENCES Orders(id) ON DELETE CASCADE,
+        producto_id INTEGER REFERENCES Productos(id) ON DELETE SET NULL,
+        sku VARCHAR(50),
+        nombre VARCHAR(200) NOT NULL,
+        descripcion TEXT,
+        precio_unitario NUMERIC(12,2) NOT NULL,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        subtotal NUMERIC(12,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX idx_order_details_order_id ON Order_Details(order_id);
+    CREATE INDEX idx_order_details_producto_id ON Order_Details(producto_id);
+  `);
+
+   // ============================================
+   // SECUENCIA PARA NÚMERO DE ORDEN
+   // ============================================
+   await query(`
+    DROP SEQUENCE IF EXISTS order_number_seq CASCADE;
+    CREATE SEQUENCE order_number_seq START 1000;
+  `);
+
+   // ============================================
+   // FUNCIÓN PARA GENERAR NÚMERO DE ORDEN
+   // ============================================
+   await query(`
+    CREATE OR REPLACE FUNCTION generate_order_number()
+    RETURNS VARCHAR AS $$
+    DECLARE
+      next_num INTEGER;
+      order_num VARCHAR;
+    BEGIN
+      next_num := nextval('order_number_seq');
+      order_num := 'ORD-' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') || '-' || LPAD(next_num::TEXT, 6, '0');
+      RETURN order_num;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+
+   // ============================================
+   // TRIGGER PARA AUTO-GENERAR order_number
+   // ============================================
+   await query(`
+    CREATE OR REPLACE FUNCTION set_order_number()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF NEW.order_number IS NULL OR NEW.order_number = '' THEN
+        NEW.order_number := generate_order_number();
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+
+   await query(`
+    DROP TRIGGER IF EXISTS trigger_set_order_number ON Orders;
+    CREATE TRIGGER trigger_set_order_number
+      BEFORE INSERT ON Orders
+      FOR EACH ROW
+      EXECUTE FUNCTION set_order_number();
+  `);
+
    console.log("\x1b[32m", "Todas las tablas, índices y triggers fueron creados correctamente.");
 }
