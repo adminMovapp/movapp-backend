@@ -16,6 +16,9 @@ export const ConfigDAO = {
                      INNER JOIN productos B ON (A.producto_id = B.id)
                      INNER JOIN paises C ON (A.pais_id = C.id)  
                      WHERE A.pais_id = $1
+                           and B.activo = TRUE
+                           and A.activo = TRUE
+                     ORDER BY B.nombre ASC
                      ;`,
          [idcountry],
       );
