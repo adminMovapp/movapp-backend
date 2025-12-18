@@ -1,7 +1,7 @@
 import { stripe } from "../utils/stripe.js";
 import { StripeService } from "../services/stripeService.js";
 import { PaymentsStripeDAO } from "../dao/paymentsStripeDAO.js";
-import { sendEmail } from "../utils/mailer.js";
+import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from "../utils/mailer.js";
 
 export const PaymentsStripeController = {
    async createIntent(req, res) {
@@ -55,7 +55,6 @@ export const PaymentsStripeController = {
 
    async webhook(req, res) {
       const sig = req.headers["stripe-signature"];
-      // req.rawBody debe ser un Buffer (establecido por express.raw en la ruta o por express.json verify en server.js)
       const raw = req.rawBody;
       if (!raw) {
          console.error("Webhook signature/parse error: raw body missing");
@@ -80,15 +79,39 @@ export const PaymentsStripeController = {
          if (result.status === "succeeded") {
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
+            const orderNumber = intent.metadata?.order_number || null;
+
             if (email) {
-               const html = `<html><body>
-                  <h3>Pago recibido</h3>
-                  <p>Pago por ${(intent.amount / 100).toFixed(
-                     2,
-                  )} ${intent.currency.toUpperCase()} procesado correctamente.</p>
-                  <p>Referencia: <strong>${intent.id}</strong></p>
-               </body></html>`;
-               await sendEmail({ to: email, subject: "Pago recibido - MovApp", html });
+               try {
+                  await sendPaymentSuccessEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     orderNumber,
+                  });
+               } catch (mailErr) {
+                  console.error("❌ Error al enviar email (no fatal):", mailErr.message || mailErr);
+               }
+            }
+         }
+
+         if (result.status === "failed") {
+            const intent = result.intent;
+            const email = intent.receipt_email || intent.metadata?.email;
+
+            if (email) {
+               try {
+                  await sendPaymentFailedEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     reason: intent.last_payment_error?.message || "No especificada",
+                  });
+               } catch (mailErr) {
+                  console.error("❌ Error al enviar email (no fatal):", mailErr.message || mailErr);
+               }
             }
          }
 
@@ -107,22 +130,19 @@ export const PaymentsStripeController = {
          if (result.status === "succeeded") {
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
+            const orderNumber = intent.metadata?.order_number || null;
 
-            // simple email validation
             const isValidEmail = typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
             if (isValidEmail) {
-               const html = `<html><body>
-                  <h3>Pago recibido (test)</h3>
-                  <p>Pago por ${(intent.amount / 100).toFixed(
-                     2,
-                  )} ${intent.currency.toUpperCase()} procesado correctamente.</p>
-                  <p>Referencia: <strong>${intent.id}</strong></p>
-               </body></html>`;
-
                try {
-                  await sendEmail({ to: email, subject: "Pago recibido - MovApp (test)", html });
+                  await sendPaymentSuccessEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     orderNumber,
+                  });
                } catch (mailErr) {
-                  // log but don't fail the webhook processing
                   console.error("❌ Error al enviar correo (no fatal):", mailErr.message || mailErr);
                }
             } else {

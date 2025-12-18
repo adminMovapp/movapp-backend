@@ -40,7 +40,6 @@ export const PasswordService = {
       const html = recoveryEmailTemplate({
          code,
          url: appLink,
-         logoUrl: "	https://movapp.org/wp-content/uploads/2025/06/Logo-Movapp-morado-1.webp", // Cambia por la URL real de tu logotipo
       });
 
       await sendEmail({

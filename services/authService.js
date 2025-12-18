@@ -8,6 +8,8 @@ import { TokenService } from "./tokenService.js";
 import { DeviceService } from "./deviceService.js";
 import { hashPassword, validatePassword, decryptAES } from "../utils/authUtils.js";
 import { logAction } from "../utils/logger.js";
+import { sendWelcomeEmail } from "../utils/mailer.js";
+
 export const AuthService = {
    async register(userData, deviceInfo, requestInfo) {
       const existing = await AuthDAO.findUserByEmail(userData.email);
@@ -22,7 +24,15 @@ export const AuthService = {
          password: hashedPassword,
       });
 
-      // console.log("\x1b[34m", "Nuevo usuario registrado:", user);
+      // Enviar email de bienvenida (no fatal)
+      try {
+         await sendWelcomeEmail({
+            to: user.email,
+            nombre: user.nombre,
+         });
+      } catch (mailErr) {
+         console.error("❌ Error al enviar email de bienvenida (no fatal):", mailErr.message || mailErr);
+      }
 
       const { accessToken, device } = await this.createSession(user, deviceInfo, requestInfo);
 
@@ -41,8 +51,6 @@ export const AuthService = {
     * Autentica un usuario
     */
    async login(credentials, deviceInfo, requestInfo) {
-      //   console.log("\x1b[36m", "LOGIN ===>", credentials, deviceInfo, requestInfo);
-
       const user = await AuthDAO.findUserByEmail(credentials.email);
       if (!user) {
          throw new Error("INVALID_CREDENTIALS");
@@ -79,7 +87,6 @@ export const AuthService = {
     * Crea una sesión completa (access token + refresh token + dispositivo)
     */
    async createSession(user, deviceInfo, requestInfo) {
-      // console.log("\x1b[35m", "createSession:", user, deviceInfo, requestInfo);
       const accessToken = TokenService.generateAccessToken(user);
 
       const device = deviceInfo?.deviceId
