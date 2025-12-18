@@ -16,24 +16,13 @@ export const PaymentsStripeController = {
             items = [],
          } = req.body;
 
-         // console.log(
-         //    "\x1b[36m",
-         //    "createIntent STRIPE  =>",
-         //    userId,
-         //    email,
-         //    amount,
-         //    currency,
-         //    description,
-         //    metadata,
-         //    items,
-         // );
-
          if (!email || !amount)
             return res.status(400).json({ success: false, message: "email y amount son requeridos" });
 
          const stripeMetadata = { ...metadata };
+
          if (items && items.length) {
-            stripeMetadata.items = JSON.stringify(items); // store as string in Stripe metadata
+            stripeMetadata.items = JSON.stringify(items);
             stripeMetadata.items_count = String(items.length);
          }
 
@@ -43,7 +32,7 @@ export const PaymentsStripeController = {
             amount,
             currency,
             description,
-            metadata: { ...metadata, items }, // store structured items in DB metadata
+            metadata: stripeMetadata,
          });
 
          res.json({ success: true, clientSecret: resp.clientSecret, intentId: resp.intentId });
@@ -77,9 +66,38 @@ export const PaymentsStripeController = {
          const result = await StripeService.handleStripeEvent(event);
 
          if (result.status === "succeeded") {
+            console.log("\x1b[33m", "result webhooks =>", result);
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
             const orderNumber = intent.metadata?.order_number || null;
+
+            // Parsear items desde metadata
+            let items = [];
+            try {
+               if (intent.metadata?.items) {
+                  items = JSON.parse(intent.metadata.items);
+                  // console.log("\x1b[36m", "✅ Items parseados desde metadata.items =>", items);
+               }
+            } catch (parseErr) {
+               console.error("⚠️ Error parseando items desde metadata.items:", parseErr.message);
+
+               // Fallback: construir items desde items_summary si existe
+               if (intent.metadata?.items_summary) {
+                  const itemsSummary = intent.metadata.items_summary;
+                  const itemsParts = itemsSummary.split(", ");
+                  items = itemsParts.map((part) => {
+                     const match = part.match(/^(.+?)\s*:\s*(.+?)\s*x\s*(\d+)$/);
+                     if (match) {
+                        return {
+                           sku: match[1].trim(),
+                           nombre: match[2].trim(),
+                           cantidad: parseInt(match[3], 10),
+                        };
+                     }
+                     return { nombre: part };
+                  });
+               }
+            }
 
             if (email) {
                try {
@@ -89,6 +107,7 @@ export const PaymentsStripeController = {
                      currency: intent.currency,
                      paymentReference: intent.id,
                      orderNumber,
+                     items,
                   });
                } catch (mailErr) {
                   console.error("❌ Error al enviar email (no fatal):", mailErr.message || mailErr);
@@ -132,6 +151,16 @@ export const PaymentsStripeController = {
             const email = intent.receipt_email || intent.metadata?.email;
             const orderNumber = intent.metadata?.order_number || null;
 
+            // Parsear items desde metadata
+            let items = [];
+            try {
+               if (intent.metadata?.items) {
+                  items = JSON.parse(intent.metadata.items);
+               }
+            } catch (parseErr) {
+               console.error("⚠️ Error parseando items:", parseErr.message);
+            }
+
             const isValidEmail = typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
             if (isValidEmail) {
                try {
@@ -141,6 +170,7 @@ export const PaymentsStripeController = {
                      currency: intent.currency,
                      paymentReference: intent.id,
                      orderNumber,
+                     items,
                   });
                } catch (mailErr) {
                   console.error("❌ Error al enviar correo (no fatal):", mailErr.message || mailErr);

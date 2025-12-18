@@ -22,19 +22,30 @@ export const StripeService = {
             }
             if (!Array.isArray(itemsArray)) itemsArray = [];
 
-            const summaryParts = itemsArray
-               .map((it) => {
-                  const sku = it.sku || "-";
-                  const name = String(it.nombre || it.name || "")
-                     .replace(/\s+/g, " ")
-                     .trim();
-                  const qty = Number.isFinite(Number(it.quantity))
-                     ? Number(it.quantity)
-                     : Number.isFinite(Number(it.qty))
-                     ? Number(it.qty)
-                     : 1;
-                  return `${sku} : ${name} x ${qty}`;
-               })
+            // Guardar items completos como JSON string (con precio y moneda)
+            const itemsWithPrice = itemsArray.map((it) => ({
+               sku: it.sku || "-",
+               nombre: String(it.nombre || it.name || "")
+                  .replace(/\s+/g, " ")
+                  .trim(),
+               cantidad: Number.isFinite(Number(it.cantidad || it.quantity || it.qty))
+                  ? Number(it.cantidad || it.quantity || it.qty)
+                  : 1,
+               precio_unitario: Number.isFinite(Number(it.precio || it.price)) ? Number(it.precio || it.price) : 0,
+               moneda: it.moneda || it.currency || currency,
+            }));
+
+            // Guardar JSON completo de items (Stripe permite hasta ~500 chars por campo metadata)
+            const itemsJSON = JSON.stringify(itemsWithPrice);
+            if (itemsJSON.length <= 500) {
+               stripeMetadata.items = itemsJSON;
+            } else {
+               console.warn("⚠️ items JSON muy largo, se truncará en items_summary");
+            }
+
+            // Summary para visualización rápida
+            const summaryParts = itemsWithPrice
+               .map((it) => `${it.sku} : ${it.nombre} x ${it.cantidad}`)
                .filter(Boolean);
 
             let itemsSummary = summaryParts.join(", ");

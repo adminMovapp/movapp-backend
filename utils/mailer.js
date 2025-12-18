@@ -63,7 +63,7 @@ export function recoveryEmailTemplate({ code, url }) {
                <p style="font-size: 16px; color: #4a5568; margin-bottom: 24px;">
                   Usa el siguiente código para reestablecer tu contraseña:
                </p>
-               <div style="font-size: 28px; font-weight: bold; color: #8149E2; letter-spacing: 4px; text-align: center; margin-bottom: 24px;">
+               <div style="font-size: 28px; font-weight: bold, color: #8149E2; letter-spacing: 4px; text-align: center; margin-bottom: 24px;">
                   ${code}
                </div>
               
@@ -79,69 +79,169 @@ export function recoveryEmailTemplate({ code, url }) {
 /**
  * Plantilla de email para confirmación de pago exitoso
  */
-export async function sendPaymentSuccessEmail({ to, amount, currency, paymentReference, orderNumber = null }) {
+export async function sendPaymentSuccessEmail({
+   to,
+   amount,
+   currency,
+   paymentReference,
+   orderNumber = null,
+   items = [],
+}) {
    try {
       const formattedAmount = Number(amount).toFixed(2);
       const currencyUpper = String(currency).toUpperCase();
+      const year = new Date().getFullYear();
+      const paymentDate = new Date().toLocaleDateString("es-MX", {
+         year: "numeric",
+         month: "long",
+         day: "numeric",
+      });
+
+      // Generar HTML de items si existen
+      let itemsHTML = "";
+      if (items && items.length > 0) {
+         itemsHTML = `
+            <tr>
+               <td colspan="2" style="padding: 16px 0 8px; font-size: 14px; color: #4a5568; border-top: 1px solid #e5e7eb;">
+                  <strong>Detalle de productos:</strong>
+               </td>
+            </tr>
+         `;
+
+         items.forEach((item) => {
+            const itemPrecio = Number(item.precio_unitario || 0);
+            const itemCantidad = Number(item.cantidad || 1);
+            const itemMoneda = String(item.moneda || currency).toUpperCase();
+            const itemTotal = (itemPrecio * itemCantidad).toFixed(2);
+
+            itemsHTML += `
+            <tr>
+               <td style="padding: 4px 0; font-size: 13px; color: #6b7280;">
+                  ${item.nombre || "Producto"} ${itemCantidad > 1 ? `(x${itemCantidad})` : ""}
+               </td>
+               <td style="padding: 4px 0; font-size: 13px; color: #374151; text-align: right;">
+                  $${itemTotal} ${itemMoneda}
+               </td>
+            </tr>
+            `;
+         });
+      }
 
       const html = `
-         <!DOCTYPE html>
-         <html>
-         <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Confirmación de compra - MovApp</title>
-         </head>
-         <body style="font-family: Arial, sans-serif; background: #f6f8fa; margin:0; padding:0;">
-            <div style="max-width: 400px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px;">
-               <div style="text-align: center; margin-bottom: 24px;">
-                  <img src="${logoUrl}" alt="MovApp" style="width: 120px; margin-bottom: 20px;" />
-               </div>
-               
-               <h2 style="font-size: 20px; color: #2d3748; text-align: center; margin-bottom: 16px;">¡Confirmación de compra!</h2>
-               
-               <p style="font-size: 14px; color: #4a5568; margin-bottom: 24px; text-align: center;">
-                  Hemos recibido tu pago exitosamente.
-               </p>
-               
-               <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <table style="width: 100%; border-collapse: collapse;">
-                     <tr>
-                        <td style="padding: 8px 0; font-size: 14px; color: #4a5568;"><strong>Monto:</strong></td>
-                        <td style="padding: 8px 0; font-size: 14px; color: #2d3748; text-align: right;">${formattedAmount} ${currencyUpper}</td>
-                     </tr>
-                     ${
-                        orderNumber
-                           ? `
-                     <tr>
-                        <td style="padding: 8px 0; font-size: 14px; color: #4a5568;"><strong>Número de Orden:</strong></td>
-                        <td style="padding: 8px 0; font-size: 14px; color: #8149E2; text-align: right; font-weight: bold;">${orderNumber}</td>
-                     </tr>
-                     `
-                           : ""
-                     }
-                     <tr>
-                        <td style="padding: 8px 0; font-size: 14px; color: #4a5568;"><strong>Referencia:</strong></td>
-                        <td style="padding: 8px 0; font-size: 12px; color: #718096; text-align: right; font-family: monospace;">${paymentReference}</td>
-                     </tr>
-                  </table>
-               </div>
-               
-               <p style="font-size: 13px; color: #a0aec0; text-align: center; margin-top: 32px;">
-                  Gracias por tu compra. Recibirás un correo adicional con los detalles de tu pedido.
-               </p>
-               
-               <p style="font-size: 12px; color: #cbd5e0; text-align: center; margin-top: 16px; margin-bottom: 0;">
-                  MovApp © ${new Date().getFullYear()}
-               </p>
-            </div>
-         </body>
-         </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <title>Confirmación de compra - Movapp</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+      <tr>
+         <td align="center">
+
+         <!-- Card -->
+         <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.08); overflow:hidden;">
+
+            <!-- Header -->
+            <tr>
+               <td align="center" style="padding:40px 32px 24px;">
+                  <img
+                     src="${logoUrl}logo_movapp.png"
+                     alt="Movapp"
+                     width="140"
+                     style="display:block; margin-bottom:24px;"
+                  />
+                  <h1 style="margin:0; font-size:26px; color:#1f2937;">
+                     ¡Confirmación de compra!
+                  </h1>
+                  <p style="margin:8px 0 0; font-size:14px; color:#6b7280;">
+                     ${paymentDate}
+                  </p>
+               </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+               <td style="padding:32px 40px; color:#374151;">
+                  <p style="font-size:16px; line-height:1.6; margin:0 0 24px; text-align:center;">
+                     Hemos recibido tu pago exitosamente. A continuación encontrarás los detalles de tu compra.
+                  </p>
+
+                  <!-- Remisión / Recibo -->
+                  <div style="background:#f9fafb; border-radius:8px; padding:24px; margin-bottom:24px; border:1px solid #e5e7eb;">
+                     <table width="100%" cellpadding="0" cellspacing="0">
+                        ${
+                           orderNumber
+                              ? `
+                        <tr>
+                           <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">
+                              <strong>Número de Orden:</strong>
+                           </td>
+                           <td style="padding: 8px 0; font-size: 14px; color: #8149E2; text-align: right; font-weight: bold;">
+                              ${orderNumber}
+                           </td>
+                        </tr>
+                        `
+                              : ""
+                        }
+                        <tr>
+                           <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">
+                              <strong>Referencia de Pago:</strong>
+                           </td>
+                           <td style="padding: 8px 0; font-size: 12px; color: #374151; text-align: right; font-family: monospace;">
+                              ${paymentReference}
+                           </td>
+                        </tr>
+                        ${itemsHTML}
+                        <tr>
+                           <td colspan="2" style="padding: 16px 0 8px; border-top: 2px solid #e5e7eb;">
+                              <table width="100%">
+                                 <tr>
+                                    <td style="font-size: 16px; color: #1f2937; font-weight: bold;">
+                                       Total pagado:
+                                    </td>
+                                    <td style="font-size: 20px; color: #8149E2; text-align: right; font-weight: bold;">
+                                       $${formattedAmount} ${currencyUpper}
+                                    </td>
+                                 </tr>
+                              </table>
+                           </td>
+                        </tr>
+                     </table>
+                  </div>
+
+                  <p style="font-size:14px; line-height:1.6; color:#6b7280; margin:0; text-align:center;">
+                     Guarda este correo como comprobante de tu compra. Si tienes alguna duda, contáctanos.
+                  </p>
+               </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+               <td align="center" style="padding:24px 32px; background:#f9fafb; border-top:1px solid #e5e7eb;">
+                  <p style="font-size:12px; color:#9ca3af; margin:0;">
+                     Este es un correo automático, por favor no respondas a este mensaje.
+                  </p>
+                  <p style="font-size:12px; color:#9ca3af; margin:8px 0 0;">
+                     © ${year} Movapp. Todos los derechos reservados.
+                  </p>
+               </td>
+            </tr>
+
+         </table>
+
+         </td>
+      </tr>
+   </table>
+</body>
+</html>
       `.trim();
 
       await sendEmail({
          to,
-         subject: "Confirmación de compra - MovApp",
+         subject: `Confirmación de compra ${orderNumber ? `- ${orderNumber}` : ""} - Movapp`,
          html,
       });
 
@@ -287,7 +387,7 @@ export async function sendWelcomeEmail({ to, nombre }) {
                   <tr>
                      <td align="center" style="padding:24px 32px; background:#f9fafb; border-top:1px solid #e5e7eb;">
                      <p style="font-size:12px; color:#9ca3af; margin:0;">
-                        Este correo fue enviado porque creaste una cuenta en MovApp.
+                        Este correo fue enviado porque creaste una cuenta en Movapp.
                      </p>
                      <p style="font-size:12px; color:#9ca3af; margin:8px 0 0;">
                         © ${year} Movapp. Todos los derechos reservados.

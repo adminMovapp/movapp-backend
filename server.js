@@ -52,7 +52,7 @@ app.use("/auth", authRouter);
 app.use("/config", configRouter);
 app.use("/payments/stripe", paymentsStripeRouter);
 
-initTables();
+//initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
