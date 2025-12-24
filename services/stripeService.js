@@ -29,31 +29,35 @@ export const StripeService = {
             currency: currency.toUpperCase(),
          });
 
-         // 2. Build stripeMetadata: short summary
-         const stripeMetadata = {
-            order_id: String(order.id),
-            order_number: order.order_number,
-         };
+         // Guardar items completos como JSON string (con precio y moneda)
+         const itemsWithPrice = items.map((it) => ({
+            sku: it.sku || "-",
+            nombre: String(it.nombre || it.name || "")
+               .replace(/\s+/g, " ")
+               .trim(),
+            cantidad: Number.isFinite(Number(it.cantidad || it.quantity || it.qty))
+               ? Number(it.cantidad || it.quantity || it.qty)
+               : 1,
+            precio_unitario: Number.isFinite(Number(it.precio || it.price)) ? Number(it.precio || it.price) : 0,
+            moneda: it.moneda || it.currency || currency,
+         }));
 
-         if (items && items.length) {
-            const summaryParts = items
-               .map((it) => {
-                  const sku = it.sku || it.producto_id || "-";
-                  const name = String(it.nombre || it.name || "")
-                     .replace(/\s+/g, " ")
-                     .trim();
-                  const qty = Number.isFinite(Number(it.quantity || it.cantidad))
-                     ? Number(it.quantity || it.cantidad)
-                     : 1;
-                  return `${sku}:${name}x${qty}`;
-               })
-               .filter(Boolean);
-
-            let itemsSummary = summaryParts.join(", ");
-            if (itemsSummary.length > 480) itemsSummary = itemsSummary.slice(0, 480) + "...";
-            if (itemsSummary) stripeMetadata.items_summary = itemsSummary;
-            stripeMetadata.items_count = String(items.length);
+         // Guardar JSON completo de items (Stripe permite hasta ~500 chars por campo metadata)
+         const stripeMetadata = { ...metadata };
+         const itemsJSON = JSON.stringify(itemsWithPrice);
+         if (itemsJSON.length <= 500) {
+            stripeMetadata.items = itemsJSON;
+         } else {
+            console.warn("⚠️ items JSON muy largo, se truncará en items_summary");
          }
+
+         // Summary para visualización rápida
+         const summaryParts = itemsWithPrice.map((it) => `${it.sku} : ${it.nombre} x ${it.cantidad}`).filter(Boolean);
+
+         let itemsSummary = summaryParts.join(", ");
+         if (itemsSummary.length > 480) itemsSummary = itemsSummary.slice(0, 480) + "...";
+         if (itemsSummary) stripeMetadata.items_summary = itemsSummary;
+         stripeMetadata.items_count = String(items.length);
 
          // 3. Crear PaymentIntent en Stripe
          const intent = await stripe.paymentIntents.create({

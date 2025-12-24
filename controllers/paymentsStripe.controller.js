@@ -1,7 +1,7 @@
 import { stripe } from "../utils/stripe.js";
 import { StripeService } from "../services/stripeService.js";
 import { PaymentsStripeDAO } from "../dao/paymentsStripeDAO.js";
-import { sendEmail } from "../utils/mailer.js";
+import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from "../utils/mailer.js";
 
 export const PaymentsStripeController = {
    async createIntent(req, res) {
@@ -16,24 +16,13 @@ export const PaymentsStripeController = {
             items = [],
          } = req.body;
 
-         // console.log(
-         //    "\x1b[36m",
-         //    "createIntent STRIPE  =>",
-         //    userId,
-         //    email,
-         //    amount,
-         //    currency,
-         //    description,
-         //    metadata,
-         //    items,
-         // );
-
          if (!email || !amount)
             return res.status(400).json({ success: false, message: "email y amount son requeridos" });
 
          const stripeMetadata = { ...metadata };
+
          if (items && items.length) {
-            stripeMetadata.items = JSON.stringify(items); // store as string in Stripe metadata
+            stripeMetadata.items = JSON.stringify(items);
             stripeMetadata.items_count = String(items.length);
          }
 
@@ -43,7 +32,7 @@ export const PaymentsStripeController = {
             amount,
             currency,
             description,
-            metadata: { ...metadata, items }, // store structured items in DB metadata
+            metadata: stripeMetadata,
          });
 
          res.json({ success: true, clientSecret: resp.clientSecret, intentId: resp.intentId });
@@ -55,7 +44,6 @@ export const PaymentsStripeController = {
 
    async webhook(req, res) {
       const sig = req.headers["stripe-signature"];
-      // req.rawBody debe ser un Buffer (establecido por express.raw en la ruta o por express.json verify en server.js)
       const raw = req.rawBody;
       if (!raw) {
          console.error("Webhook signature/parse error: raw body missing");
@@ -78,17 +66,71 @@ export const PaymentsStripeController = {
          const result = await StripeService.handleStripeEvent(event);
 
          if (result.status === "succeeded") {
+            console.log("\x1b[33m", "result webhooks =>", result);
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
+            const orderNumber = intent.metadata?.order_number || null;
+
+            // Parsear items desde metadata
+            let items = [];
+            try {
+               if (intent.metadata?.items) {
+                  items = JSON.parse(intent.metadata.items);
+                  // console.log("\x1b[36m", "✅ Items parseados desde metadata.items =>", items);
+               }
+            } catch (parseErr) {
+               console.error("⚠️ Error parseando items desde metadata.items:", parseErr.message);
+
+               // Fallback: construir items desde items_summary si existe
+               if (intent.metadata?.items_summary) {
+                  const itemsSummary = intent.metadata.items_summary;
+                  const itemsParts = itemsSummary.split(", ");
+                  items = itemsParts.map((part) => {
+                     const match = part.match(/^(.+?)\s*:\s*(.+?)\s*x\s*(\d+)$/);
+                     if (match) {
+                        return {
+                           sku: match[1].trim(),
+                           nombre: match[2].trim(),
+                           cantidad: parseInt(match[3], 10),
+                        };
+                     }
+                     return { nombre: part };
+                  });
+               }
+            }
+
             if (email) {
-               const html = `<html><body>
-                  <h3>Pago recibido</h3>
-                  <p>Pago por ${(intent.amount / 100).toFixed(
-                     2,
-                  )} ${intent.currency.toUpperCase()} procesado correctamente.</p>
-                  <p>Referencia: <strong>${intent.id}</strong></p>
-               </body></html>`;
-               await sendEmail({ to: email, subject: "Pago recibido - MovApp", html });
+               try {
+                  await sendPaymentSuccessEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     orderNumber,
+                     items,
+                  });
+               } catch (mailErr) {
+                  console.error("❌ Error al enviar email (no fatal):", mailErr.message || mailErr);
+               }
+            }
+         }
+
+         if (result.status === "failed") {
+            const intent = result.intent;
+            const email = intent.receipt_email || intent.metadata?.email;
+
+            if (email) {
+               try {
+                  await sendPaymentFailedEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     reason: intent.last_payment_error?.message || "No especificada",
+                  });
+               } catch (mailErr) {
+                  console.error("❌ Error al enviar email (no fatal):", mailErr.message || mailErr);
+               }
             }
          }
 
@@ -107,22 +149,30 @@ export const PaymentsStripeController = {
          if (result.status === "succeeded") {
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
+            const orderNumber = intent.metadata?.order_number || null;
 
-            // simple email validation
+            // Parsear items desde metadata
+            let items = [];
+            try {
+               if (intent.metadata?.items) {
+                  items = JSON.parse(intent.metadata.items);
+               }
+            } catch (parseErr) {
+               console.error("⚠️ Error parseando items:", parseErr.message);
+            }
+
             const isValidEmail = typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
             if (isValidEmail) {
-               const html = `<html><body>
-                  <h3>Pago recibido (test)</h3>
-                  <p>Pago por ${(intent.amount / 100).toFixed(
-                     2,
-                  )} ${intent.currency.toUpperCase()} procesado correctamente.</p>
-                  <p>Referencia: <strong>${intent.id}</strong></p>
-               </body></html>`;
-
                try {
-                  await sendEmail({ to: email, subject: "Pago recibido - MovApp (test)", html });
+                  await sendPaymentSuccessEmail({
+                     to: email,
+                     amount: intent.amount / 100,
+                     currency: intent.currency,
+                     paymentReference: intent.id,
+                     orderNumber,
+                     items,
+                  });
                } catch (mailErr) {
-                  // log but don't fail the webhook processing
                   console.error("❌ Error al enviar correo (no fatal):", mailErr.message || mailErr);
                }
             } else {
