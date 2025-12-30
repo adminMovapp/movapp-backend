@@ -6,7 +6,6 @@ export const OrdersDAO = {
     */
    async createOrder({
       userId = null,
-      email,
       paisId,
       subtotal,
       total,
@@ -16,16 +15,13 @@ export const OrdersDAO = {
       paymentReference = null,
       items = [],
    }) {
-      const client = await query.getClient();
       try {
-         await client.query("BEGIN");
-
          // Insertar orden (order_number se genera automáticamente por trigger)
-         const orderResult = await client.query(
-            `INSERT INTO Orders (user_id, email, pais_id, subtotal, total, currency, payment_method, payment_status, payment_reference)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         const orderResult = await query(
+            `INSERT INTO Orders (user_id, pais_id, subtotal, total, currency, payment_method, payment_status, payment_reference)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
-            [userId, email, paisId, subtotal, total, currency, paymentMethod, paymentStatus, paymentReference],
+            [userId, paisId, subtotal, total, currency, paymentMethod, paymentStatus, paymentReference],
          );
 
          const order = orderResult.rows[0];
@@ -33,7 +29,7 @@ export const OrdersDAO = {
          // Insertar detalles
          if (items && items.length > 0) {
             for (const item of items) {
-               await client.query(
+               await query(
                   `INSERT INTO Order_Details (order_id, producto_id, sku, nombre, descripcion, precio_unitario, cantidad, subtotal)
                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
                   [
@@ -50,14 +46,10 @@ export const OrdersDAO = {
             }
          }
 
-         await client.query("COMMIT");
          return order;
       } catch (err) {
-         await client.query("ROLLBACK");
          console.error("OrdersDAO.createOrder error", err);
          throw err;
-      } finally {
-         client.release();
       }
    },
 

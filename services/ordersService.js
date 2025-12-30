@@ -1,7 +1,7 @@
 import { OrdersDAO } from "../dao/ordersDAO.js";
 
 export const OrdersService = {
-   async createOrder({ userId = null, email, paisId, items = [], paymentMethod = null, currency = "MXN" }) {
+   async createOrder({ userId = null, paisId, items = [], paymentMethod = null, currency = "MXN" }) {
       try {
          let subtotal = 0;
          const processedItems = items.map((item) => {
@@ -25,7 +25,6 @@ export const OrdersService = {
 
          const order = await OrdersDAO.createOrder({
             userId,
-            email,
             paisId,
             subtotal,
             total,

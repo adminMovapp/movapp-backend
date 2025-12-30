@@ -7,10 +7,14 @@ export const StripeService = {
          const amount_cents_stripe = Math.round(parseFloat(amount) * 100);
          const amount_cents = Math.round(parseFloat(amount));
 
-         // Build stripeMetadata: only short string values and a truncated summary
+         // Preparar metadata para Stripe (límite 500 caracteres por campo)
          const stripeMetadata = {};
-         if (metadata.order_id) stripeMetadata.order_id = String(metadata.order_id);
 
+         // Agregar order_id y order_number si existen
+         if (metadata.order_id) stripeMetadata.order_id = String(metadata.order_id);
+         if (metadata.order_number) stripeMetadata.order_number = String(metadata.order_number);
+
+         // Crear resumen corto de items (sin JSON completo)
          if (metadata.items) {
             let itemsArray = metadata.items;
             if (typeof itemsArray === "string") {
@@ -20,39 +24,15 @@ export const StripeService = {
                   itemsArray = [];
                }
             }
-            if (!Array.isArray(itemsArray)) itemsArray = [];
-
-            // Guardar items completos como JSON string (con precio y moneda)
-            const itemsWithPrice = itemsArray.map((it) => ({
-               sku: it.sku || "-",
-               nombre: String(it.nombre || it.name || "")
-                  .replace(/\s+/g, " ")
-                  .trim(),
-               cantidad: Number.isFinite(Number(it.cantidad || it.quantity || it.qty))
-                  ? Number(it.cantidad || it.quantity || it.qty)
-                  : 1,
-               precio_unitario: Number.isFinite(Number(it.precio || it.price)) ? Number(it.precio || it.price) : 0,
-               moneda: it.moneda || it.currency || currency,
-            }));
-
-            // Guardar JSON completo de items (Stripe permite hasta ~500 chars por campo metadata)
-            const itemsJSON = JSON.stringify(itemsWithPrice);
-            if (itemsJSON.length <= 500) {
-               stripeMetadata.items = itemsJSON;
-            } else {
-               console.warn("⚠️ items JSON muy largo, se truncará en items_summary");
+            if (Array.isArray(itemsArray)) {
+               stripeMetadata.items_count = String(itemsArray.length);
+               // Crear resumen corto: "SKU x cantidad"
+               const summary = itemsArray
+                  .map((it) => `${it.sku || it.nombre || "Item"} x${it.quantity || it.cantidad || 1}`)
+                  .join(", ");
+               // Truncar si es muy largo
+               stripeMetadata.items_summary = summary.length > 450 ? summary.slice(0, 450) + "..." : summary;
             }
-
-            // Summary para visualización rápida
-            const summaryParts = itemsWithPrice
-               .map((it) => `${it.sku} : ${it.nombre} x ${it.cantidad}`)
-               .filter(Boolean);
-
-            let itemsSummary = summaryParts.join(", ");
-            // ensure <= ~480 chars to be safe
-            if (itemsSummary.length > 480) itemsSummary = itemsSummary.slice(0, 480) + "...";
-            if (itemsSummary) stripeMetadata.items_summary = itemsSummary;
-            stripeMetadata.items_count = String(itemsArray.length);
          }
 
          const intent = await stripe.paymentIntents.create({
@@ -85,17 +65,27 @@ export const StripeService = {
    async handleStripeEvent(event) {
       try {
          const intent = event.data.object;
-         // console.log("\x1b[36m", "handleStripeEvent STRIPE  =>", intent);
+         const orderId = intent.metadata?.order_id ? parseInt(intent.metadata.order_id, 10) : null;
 
          if (event.type === "payment_intent.succeeded") {
             const chargeId = intent.charges?.data?.[0]?.id || null;
             await PaymentsStripeDAO.updatePaymentStatusByIntent(intent.id, "succeeded", chargeId);
+            // Actualizar estado de la orden en Orders
+            if (orderId) {
+               const OrdersService = await import("./ordersService.js");
+               await OrdersService.OrdersService.updatePaymentStatus(orderId, "paid", intent.id);
+            }
             return { intent, status: "succeeded" };
          }
 
          if (event.type === "payment_intent.payment_failed") {
             const failure_message = intent.last_payment_error?.decline_code || null;
             await PaymentsStripeDAO.updatePaymentStatusByIntent(intent.id, "failed", failure_message);
+            // Actualizar estado de la orden en Orders
+            if (orderId) {
+               const OrdersService = await import("./ordersService.js");
+               await OrdersService.OrdersService.updatePaymentStatus(orderId, "failed", intent.id);
+            }
             return { intent, status: "failed" };
          }
 

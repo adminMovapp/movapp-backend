@@ -325,7 +325,7 @@ export async function initTables() {
   `);
 
    // ============================================
-   // TABLA ORDERS (Pedidos/Órdenes)
+   // TABLA ORDERS (Pedidos/Ordenes)
    // ============================================
    await query(`
     DROP TABLE IF EXISTS Orders CASCADE;
@@ -333,7 +333,6 @@ export async function initTables() {
         id SERIAL PRIMARY KEY,
         order_number VARCHAR(50) UNIQUE NOT NULL,
         user_id INTEGER REFERENCES Usuarios(id) ON DELETE SET NULL,
-        email VARCHAR(255),
         pais_id INTEGER REFERENCES Paises(id) ON DELETE SET NULL,
         subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
         total NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -379,40 +378,13 @@ export async function initTables() {
   `);
 
    // ============================================
-   // SECUENCIA PARA NÚMERO DE ORDEN
-   // ============================================
-   await query(`
-    DROP SEQUENCE IF EXISTS order_number_seq CASCADE;
-    CREATE SEQUENCE order_number_seq START 1000;
-  `);
-
-   // ============================================
-   // FUNCIÓN PARA GENERAR NÚMERO DE ORDEN
-   // ============================================
-   await query(`
-    CREATE OR REPLACE FUNCTION generate_order_number()
-    RETURNS VARCHAR AS $$
-    DECLARE
-      next_num INTEGER;
-      order_num VARCHAR;
-    BEGIN
-      next_num := nextval('order_number_seq');
-      order_num := 'ORD-' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') || '-' || LPAD(next_num::TEXT, 6, '0');
-      RETURN order_num;
-    END;
-    $$ LANGUAGE plpgsql;
-  `);
-
-   // ============================================
-   // TRIGGER PARA AUTO-GENERAR order_number
+   // FUNCIÓN PARA GENERAR NÚMERO DE ORDEN (usando ID)
    // ============================================
    await query(`
     CREATE OR REPLACE FUNCTION set_order_number()
     RETURNS TRIGGER AS $$
     BEGIN
-      IF NEW.order_number IS NULL OR NEW.order_number = '' THEN
-        NEW.order_number := generate_order_number();
-      END IF;
+      NEW.order_number := 'ORD-' || LPAD(NEW.id::TEXT, 6, '0');
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;

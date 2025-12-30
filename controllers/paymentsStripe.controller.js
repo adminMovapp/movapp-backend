@@ -9,33 +9,54 @@ export const PaymentsStripeController = {
          const {
             userId = null,
             email,
+            paisId = null,
             amount,
             currency = "mxn",
-            description = " Compra aplicacion MovApp",
-            metadata = {},
+            description = "Compra aplicacion MovApp",
             items = [],
          } = req.body;
+
+         console.log("\x1b[32m", "createIntent =>", paisId);
 
          if (!email || !amount)
             return res.status(400).json({ success: false, message: "email y amount son requeridos" });
 
-         const stripeMetadata = { ...metadata };
+         // 1. Crear la orden y sus detalles
+         const order = await import("../services/ordersService.js").then((m) =>
+            m.OrdersService.createOrder({
+               userId,
+               paisId,
+               items,
+               paymentMethod: "stripe",
+               currency: currency.toUpperCase(),
+            }),
+         );
 
-         if (items && items.length) {
-            stripeMetadata.items = JSON.stringify(items);
-            stripeMetadata.items_count = String(items.length);
-         }
+         // 2. Preparar metadata para Stripe
+         const stripeMetadata = {
+            order_id: order.id,
+            order_number: order.order_number,
+            items: JSON.stringify(items),
+            items_count: String(items.length),
+         };
 
+         // 3. Crear PaymentIntent en Stripe
          const resp = await StripeService.createPaymentIntent({
             userId,
             email,
             amount,
             currency,
-            description,
+            description: description || `Orden ${order.order_number}`,
             metadata: stripeMetadata,
          });
 
-         res.json({ success: true, clientSecret: resp.clientSecret, intentId: resp.intentId });
+         res.json({
+            success: true,
+            clientSecret: resp.clientSecret,
+            intentId: resp.intentId,
+            orderId: order.id,
+            orderNumber: order.order_number,
+         });
       } catch (err) {
          console.error("Stripe createIntent error", err);
          res.status(500).json({ success: false, message: "Error creando PaymentIntent" });
@@ -45,6 +66,7 @@ export const PaymentsStripeController = {
    async webhook(req, res) {
       const sig = req.headers["stripe-signature"];
       const raw = req.rawBody;
+      console.log("\x1b[32m", "Webhooks =>");
       if (!raw) {
          console.error("Webhook signature/parse error: raw body missing");
          return res
@@ -66,36 +88,29 @@ export const PaymentsStripeController = {
          const result = await StripeService.handleStripeEvent(event);
 
          if (result.status === "succeeded") {
-            console.log("\x1b[33m", "result webhooks =>", result);
+            // console.log("\x1b[33m", "result webhooks =>", result);
             const intent = result.intent;
             const email = intent.receipt_email || intent.metadata?.email;
             const orderNumber = intent.metadata?.order_number || null;
+            const orderId = intent.metadata?.order_id ? parseInt(intent.metadata.order_id, 10) : null;
 
-            // Parsear items desde metadata
+            // Obtener items completos desde la base de datos
             let items = [];
-            try {
-               if (intent.metadata?.items) {
-                  items = JSON.parse(intent.metadata.items);
-                  // console.log("\x1b[36m", "✅ Items parseados desde metadata.items =>", items);
-               }
-            } catch (parseErr) {
-               console.error("⚠️ Error parseando items desde metadata.items:", parseErr.message);
-
-               // Fallback: construir items desde items_summary si existe
-               if (intent.metadata?.items_summary) {
-                  const itemsSummary = intent.metadata.items_summary;
-                  const itemsParts = itemsSummary.split(", ");
-                  items = itemsParts.map((part) => {
-                     const match = part.match(/^(.+?)\s*:\s*(.+?)\s*x\s*(\d+)$/);
-                     if (match) {
-                        return {
-                           sku: match[1].trim(),
-                           nombre: match[2].trim(),
-                           cantidad: parseInt(match[3], 10),
-                        };
-                     }
-                     return { nombre: part };
-                  });
+            if (orderId) {
+               try {
+                  const OrdersService = await import("../services/ordersService.js");
+                  const order = await OrdersService.OrdersService.getOrderWithDetails(orderId);
+                  if (order && order.items) {
+                     items = order.items.map((item) => ({
+                        sku: item.sku || "",
+                        nombre: item.nombre || "",
+                        cantidad: item.cantidad || 1,
+                        precio_unitario: item.precio_unitario || 0,
+                        moneda: intent.currency || "MXN",
+                     }));
+                  }
+               } catch (err) {
+                  console.error("⚠️ Error obteniendo items desde Orders:", err.message);
                }
             }
 
