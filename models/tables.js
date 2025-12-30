@@ -325,11 +325,11 @@ export async function initTables() {
   `);
 
    // ============================================
-   // TABLA ORDERS (Pedidos/Ordenes)
+   // TABLA ORDENES (Pedidos/Ordenes)
    // ============================================
    await query(`
-    DROP TABLE IF EXISTS Orders CASCADE;
-    CREATE TABLE Orders (
+    DROP TABLE IF EXISTS Ordenes CASCADE;
+    CREATE TABLE Ordenes (
         id SERIAL PRIMARY KEY,
         order_number VARCHAR(50) UNIQUE NOT NULL,
         user_id INTEGER REFERENCES Usuarios(id) ON DELETE SET NULL,
@@ -343,27 +343,27 @@ export async function initTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX idx_orders_order_number ON Orders(order_number);
-    CREATE INDEX idx_orders_user_id ON Orders(user_id);
-    CREATE INDEX idx_orders_created_at ON Orders(created_at);
+    CREATE INDEX idx_ordenes_order_number ON Ordenes(order_number);
+    CREATE INDEX idx_ordenes_user_id ON Ordenes(user_id);
+    CREATE INDEX idx_ordenes_created_at ON Ordenes(created_at);
   `);
 
    await query(`
-    DROP TRIGGER IF EXISTS update_orders_updated_at ON Orders;
-    CREATE TRIGGER update_orders_updated_at
-      BEFORE UPDATE ON Orders
+    DROP TRIGGER IF EXISTS update_ordenes_updated_at ON Ordenes;
+    CREATE TRIGGER update_ordenes_updated_at
+      BEFORE UPDATE ON Ordenes
       FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column();
   `);
 
    // ============================================
-   // TABLA ORDER_DETAILS (Detalle de pedidos)
+   // TABLA ORDENES_DETALLE (Detalle de pedidos)
    // ============================================
    await query(`
-    DROP TABLE IF EXISTS Order_Details CASCADE;
-    CREATE TABLE Order_Details (
+    DROP TABLE IF EXISTS Ordenes_Detalle CASCADE;
+    CREATE TABLE Ordenes_Detalle (
         id SERIAL PRIMARY KEY,
-        order_id INTEGER NOT NULL REFERENCES Orders(id) ON DELETE CASCADE,
+        order_id INTEGER NOT NULL REFERENCES Ordenes(id) ON DELETE CASCADE,
         producto_id INTEGER REFERENCES Productos(id) ON DELETE SET NULL,
         sku VARCHAR(50),
         nombre VARCHAR(200) NOT NULL,
@@ -373,8 +373,8 @@ export async function initTables() {
         subtotal NUMERIC(12,2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX idx_order_details_order_id ON Order_Details(order_id);
-    CREATE INDEX idx_order_details_producto_id ON Order_Details(producto_id);
+    CREATE INDEX idx_ordenes_detalle_order_id ON Ordenes_Detalle(order_id);
+    CREATE INDEX idx_ordenes_detalle_producto_id ON Ordenes_Detalle(producto_id);
   `);
 
    // ============================================
@@ -391,9 +391,9 @@ export async function initTables() {
   `);
 
    await query(`
-    DROP TRIGGER IF EXISTS trigger_set_order_number ON Orders;
+    DROP TRIGGER IF EXISTS trigger_set_order_number ON Ordenes;
     CREATE TRIGGER trigger_set_order_number
-      BEFORE INSERT ON Orders
+      BEFORE INSERT ON Ordenes
       FOR EACH ROW
       EXECUTE FUNCTION set_order_number();
   `);

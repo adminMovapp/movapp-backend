@@ -18,7 +18,7 @@ export const OrdersDAO = {
       try {
          // Insertar orden (order_number se genera automáticamente por trigger)
          const orderResult = await query(
-            `INSERT INTO Orders (user_id, pais_id, subtotal, total, currency, payment_method, payment_status, payment_reference)
+            `INSERT INTO Ordenes (user_id, pais_id, subtotal, total, currency, payment_method, payment_status, payment_reference)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
             [userId, paisId, subtotal, total, currency, paymentMethod, paymentStatus, paymentReference],
@@ -30,7 +30,7 @@ export const OrdersDAO = {
          if (items && items.length > 0) {
             for (const item of items) {
                await query(
-                  `INSERT INTO Order_Details (order_id, producto_id, sku, nombre, descripcion, precio_unitario, cantidad, subtotal)
+                  `INSERT INTO Ordenes_Detalle (order_id, producto_id, sku, nombre, descripcion, precio_unitario, cantidad, subtotal)
                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
                   [
                      order.id,
@@ -58,7 +58,7 @@ export const OrdersDAO = {
     */
    async updatePaymentStatus(orderId, paymentStatus, paymentReference = null) {
       const result = await query(
-         `UPDATE Orders SET payment_status = $1, payment_reference = $2, updated_at = NOW()
+         `UPDATE Ordenes SET payment_status = $1, payment_reference = $2, updated_at = NOW()
           WHERE id = $3 RETURNING *`,
          [paymentStatus, paymentReference, orderId],
       );
@@ -70,7 +70,7 @@ export const OrdersDAO = {
     */
    async updatePaymentReference(orderId, paymentReference) {
       const result = await query(
-         `UPDATE Orders SET payment_reference = $1, updated_at = NOW()
+         `UPDATE Ordenes SET payment_reference = $1, updated_at = NOW()
           WHERE id = $2 RETURNING *`,
          [paymentReference, orderId],
       );
@@ -81,7 +81,7 @@ export const OrdersDAO = {
     * Busca orden por ID
     */
    async findOrderById(orderId) {
-      const result = await query(`SELECT * FROM Orders WHERE id = $1`, [orderId]);
+      const result = await query(`SELECT * FROM Ordenes WHERE id = $1`, [orderId]);
       return result.rows[0];
    },
 
@@ -89,7 +89,7 @@ export const OrdersDAO = {
     * Busca orden por order_number
     */
    async findOrderByNumber(orderNumber) {
-      const result = await query(`SELECT * FROM Orders WHERE order_number = $1`, [orderNumber]);
+      const result = await query(`SELECT * FROM Ordenes WHERE order_number = $1`, [orderNumber]);
       return result.rows[0];
    },
 
@@ -97,7 +97,7 @@ export const OrdersDAO = {
     * Obtiene detalles de una orden
     */
    async getOrderDetails(orderId) {
-      const result = await query(`SELECT * FROM Order_Details WHERE order_id = $1 ORDER BY id`, [orderId]);
+      const result = await query(`SELECT * FROM Ordenes_Detalle WHERE order_id = $1 ORDER BY id`, [orderId]);
       return result.rows;
    },
 
