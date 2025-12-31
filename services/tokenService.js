@@ -6,10 +6,10 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-// const ACCESS_TOKEN_EXP = "30m";
-// const REFRESH_EXP_DAYS = 30;
-const ACCESS_TOKEN_EXP = "30s"; // 30 segundos para pruebas
-const REFRESH_EXP_DAYS = 0.001; // 1.44 minutos para pruebas
+const ACCESS_TOKEN_EXP = "30m";
+const REFRESH_EXP_DAYS = 30;
+// const ACCESS_TOKEN_EXP = "30s"; // 30 segundos para pruebas
+// const REFRESH_EXP_DAYS = 0.001; // 1.44 minutos para pruebas
 
 export const TokenService = {
    /**
