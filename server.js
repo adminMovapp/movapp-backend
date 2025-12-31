@@ -7,6 +7,7 @@ import configRouter from "./routes/config.js";
 import authRouter from "./routes/auth.js";
 import pagosRouter from "./routes/payments.js";
 import paymentsStripeRouter from "./routes/paymentsStripe.js";
+import ordersRouter from "./routes/orders.js";
 
 process.env.TZ = "America/Mexico_City";
 const app = express();
@@ -51,6 +52,7 @@ app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
 app.use("/payments/stripe", paymentsStripeRouter);
+app.use("/orders", ordersRouter);
 
 //initTables();
 

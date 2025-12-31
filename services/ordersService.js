@@ -60,4 +60,8 @@ export const OrdersService = {
       const details = await OrdersDAO.getOrderDetails(order.id);
       return { ...order, items: details };
    },
+
+   async getPaidOrdersByUserUuid(userUuid) {
+      return await OrdersDAO.getPaidOrdersByUserUuid(userUuid);
+   },
 };

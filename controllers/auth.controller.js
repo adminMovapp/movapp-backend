@@ -26,7 +26,23 @@ function getRequestInfo(req) {
 function handleError(res, error) {
    console.error("\x1b[31m", "Error:", error);
    const message = ERROR_MESSAGES[error.message] || "Error en el servidor";
-   const status = error.message === "INVALID_CREDENTIALS" ? 401 : 500;
+
+   // Determinar status code apropiado
+   let status = 500;
+   if (error.message === "INVALID_CREDENTIALS") {
+      status = 401;
+   } else if (error.message === "INVALID_REFRESH_TOKEN") {
+      status = 401;
+   } else if (error.message === "USER_ALREADY_EXISTS") {
+      status = 409; // Conflict
+   } else if (error.message === "USER_NOT_FOUND") {
+      status = 404;
+   } else if (error.message === "INVALID_OR_EXPIRED_CODE") {
+      status = 400;
+   } else if (error.message === "TOO_MANY_ATTEMPTS") {
+      status = 429; // Too Many Requests
+   }
+
    res.status(status).json({ success: false, message });
 }
 
@@ -68,10 +84,29 @@ export const AuthController = {
    async refreshToken(req, res) {
       try {
          const { refreshToken, deviceId } = req.body;
+
+         console.log("🔄 Refresh Token - Datos recibidos:", {
+            refreshToken: refreshToken?.substring(0, 20) + "...",
+            deviceId,
+            body: req.body,
+         });
+
          const result = await AuthService.refreshAccessToken(refreshToken, deviceId);
+
+         console.log("✅ Refresh Token - Respuesta:", {
+            accessToken: result.accessToken?.substring(0, 30) + "...",
+            hasRefreshToken: !!result.refreshToken,
+            ...result,
+         });
+
          res.json({ success: true, ...result });
       } catch (error) {
-         handleError(res, error);
+         console.error("❌ Refresh Token - Error:", error.message);
+         // Siempre devolver 401 si falla el refresh token
+         res.status(401).json({
+            success: false,
+            message: "No autorizado. Por favor, inicia sesión nuevamente.",
+         });
       }
    },
 

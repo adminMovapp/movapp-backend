@@ -120,6 +120,8 @@ export const AuthService = {
          deviceId,
       });
 
+      console.log("\x1b[35m", "tokenRow =>", tokenRow);
+
       if (!tokenRow) {
          throw new Error("INVALID_REFRESH_TOKEN");
       }
@@ -128,6 +130,7 @@ export const AuthService = {
       if (!user) {
          throw new Error("USER_NOT_FOUND");
       }
+      console.log("\x1b[34m", "user =>", user);
 
       const accessToken = TokenService.generateAccessToken(user);
       return { accessToken };

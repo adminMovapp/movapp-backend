@@ -46,9 +46,12 @@ export function generateResetCode(length = 5) {
 }
 
 export function sendSessionResponse(res, { user, accessToken, device }) {
+   // Excluir password de la respuesta
+   const { password, activo, ...userWithoutPassword } = user;
+
    res.json({
       success: true,
-      user,
+      user: userWithoutPassword,
       accessToken,
       device,
    });

@@ -110,4 +110,34 @@ export const OrdersDAO = {
       const details = await this.getOrderDetails(orderId);
       return { ...order, items: details };
    },
+
+   /**
+    * Obtiene todas las órdenes pagadas de un usuario por user_uuid
+    */
+   async getPaidOrdersByUserUuid(userUuid) {
+      try {
+         const result = await query(
+            `SELECT od.* 
+            FROM Ordenes o
+            INNER JOIN ordenes_detalle od ON o.id = od.order_id
+            INNER JOIN Usuarios u ON o.user_id = u.id
+             WHERE u.user_uuid = $1 AND o.payment_status = 'paid'
+             ORDER BY o.created_at DESC`,
+            [userUuid],
+         );
+
+         // Para cada orden, obtener sus detalles
+         const ordersWithDetails = await Promise.all(
+            result.rows.map(async (order) => {
+               const details = await this.getOrderDetails(order.id);
+               return { ...order, items: details };
+            }),
+         );
+
+         return result.rows;
+      } catch (err) {
+         console.error("OrdersDAO.getPaidOrdersByUserUuid error", err);
+         throw err;
+      }
+   },
 };

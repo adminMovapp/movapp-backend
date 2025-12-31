@@ -30,4 +30,18 @@ export const OrdersController = {
          res.status(500).json({ success: false, message: "Error consultando orden" });
       }
    },
+
+   /**
+    * GET /orders/user/:userUuid - Obtener todas las órdenes pagadas de un usuario
+    */
+   async getPaidByUserUuid(req, res) {
+      try {
+         const userUuid = req.params.userUuid;
+         const orders = await OrdersService.getPaidOrdersByUserUuid(userUuid);
+         res.json({ success: true, orders: orders, count: orders.length });
+      } catch (err) {
+         console.error("OrdersController.getPaidByUserUuid error", err);
+         res.status(500).json({ success: false, message: "Error consultando órdenes del usuario" });
+      }
+   },
 };
