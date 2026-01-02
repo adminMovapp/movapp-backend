@@ -18,21 +18,26 @@ async function resolveDeviceInternalId(deviceIdentifier) {
 
 export const AuthDAO = {
    findUserByEmail: async (email) => {
+      console.log("🗄️ [DAO] findUserByEmail - Consultando email:", email);
       const result = await query("SELECT * FROM Usuarios WHERE email = $1", [email]);
+      console.log("🗄️ [DAO] Resultado:", result.rows.length > 0 ? "Usuario encontrado" : "No encontrado");
       return result.rows[0];
    },
 
    insertUser: async ({ nombre, email, telefono, pais_id, cp, password }) => {
+      console.log("🗄️ [DAO] insertUser - Insertando usuario:", { nombre, email, telefono, pais_id, cp });
       const result = await query(
          `INSERT INTO Usuarios (nombre, email, telefono, pais_id, cp, password)
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING id, user_uuid, nombre, email, telefono, pais_id, cp, created_at`,
          [nombre, email, telefono, pais_id, cp, password],
       );
+      console.log("✅ [DAO] Usuario insertado con ID:", result.rows[0]?.id);
       return result.rows[0];
    },
 
    upsertDevice: async ({ deviceId, device, platform, model, appVersion, userId, refresh_hash = null }) => {
+      console.log("🗄️ [DAO] upsertDevice - deviceId:", deviceId, "userId:", userId);
       const result = await query(
          `INSERT INTO Dispositivos (device_id, device, platform, model, app_version, user_id, refresh_hash)
              VALUES ($1,$2,$3,$4,$5,$6,$7)
@@ -46,6 +51,7 @@ export const AuthDAO = {
        RETURNING id, device_id, user_id, refresh_hash`,
          [deviceId, device, platform, model, appVersion, userId, refresh_hash],
       );
+      console.log("✅ [DAO] Dispositivo upserted con ID:", result.rows[0]?.id);
       return result.rows[0];
    },
 

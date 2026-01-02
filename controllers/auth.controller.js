@@ -49,14 +49,30 @@ function handleError(res, error) {
 export const AuthController = {
    async registerUser(req, res) {
       try {
+         console.log("📱 [Controller] registerUser - Petición recibida");
          const { nombre, email, telefono, pais_id, cp, password } = req.body;
          const { deviceId, device, platform, model, appVersion } = req.body;
+         console.log("📋 [Controller] Datos recibidos:", {
+            nombre,
+            email,
+            telefono,
+            pais_id,
+            cp,
+            hasPassword: !!password,
+            deviceId,
+            device,
+            platform,
+            model,
+            appVersion,
+         });
 
+         console.log("🔄 [Controller] Llamando a AuthService.register...");
          const result = await AuthService.register(
             { nombre, email, telefono, pais_id, cp, password },
             { deviceId, device, platform, model, appVersion },
             getRequestInfo(req),
          );
+         console.log("✅ [Controller] Registro exitoso, enviando respuesta");
 
          sendSessionResponse(res, result);
       } catch (error) {
@@ -67,14 +83,26 @@ export const AuthController = {
 
    async loginUser(req, res) {
       try {
+         console.log("📱 [Controller] loginUser - Petición recibida");
          const { email, password } = req.body;
          const { deviceId, device, platform, model, appVersion } = req.body;
+         console.log("📋 [Controller] Datos recibidos:", {
+            email,
+            hasPassword: !!password,
+            deviceId,
+            device,
+            platform,
+            model,
+            appVersion,
+         });
 
+         console.log("🔄 [Controller] Llamando a AuthService.login...");
          const result = await AuthService.login(
             { email, password },
             { deviceId, device, platform, model, appVersion },
             getRequestInfo(req),
          );
+         console.log("✅ [Controller] Login exitoso, enviando respuesta");
 
          sendSessionResponse(res, result);
       } catch (error) {

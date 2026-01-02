@@ -10,11 +10,18 @@ export const DeviceService = {
     * Registra/actualiza un dispositivo y genera su refresh token
     */
    async registerDeviceWithRefreshToken(userId, deviceInfo) {
-      if (!deviceInfo?.deviceId) return null;
+      console.log("📱 [DeviceService] Registrando dispositivo para userId:", userId);
+      if (!deviceInfo?.deviceId) {
+         console.log("⚠️ [DeviceService] No deviceId, retornando null");
+         return null;
+      }
 
       const { deviceId, device, platform, model, appVersion } = deviceInfo;
+      console.log("🔑 [DeviceService] Generando refresh token...");
       const refreshHash = TokenService.generateRefreshToken();
+      console.log("✅ [DeviceService] Refresh token generado");
 
+      console.log("💾 [DeviceService] Haciendo upsert del dispositivo...");
       const deviceResp = await AuthDAO.upsertDevice({
          deviceId,
          device,
@@ -24,13 +31,16 @@ export const DeviceService = {
          userId,
          refresh_hash: refreshHash,
       });
+      console.log("✅ [DeviceService] Dispositivo upserted");
 
+      console.log("💾 [DeviceService] Insertando refresh token...");
       await AuthDAO.insertRefreshToken({
          userId,
          deviceId: deviceResp.device_id,
          tokenHash: refreshHash,
          expiresAt: TokenService.getRefreshTokenExpiration(),
       });
+      console.log("✅ [DeviceService] Refresh token insertado");
 
       return deviceResp;
    },
