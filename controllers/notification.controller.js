@@ -39,7 +39,7 @@ export const NotificationController = {
             },
          });
       } catch (err) {
-         console.error("NotificationController.registerPushToken error", err);
+         console.error("❌ Error en registerPushToken:", err);
          const message = ERROR_MESSAGES[err.message] || "Error registrando push token";
          const status = err.message === "DEVICE_NOT_FOUND" ? 404 : err.message === "INVALID_PUSH_TOKEN" ? 400 : 500;
          res.status(status).json({ success: false, message });
@@ -68,7 +68,7 @@ export const NotificationController = {
             message: "Notificaciones desactivadas",
          });
       } catch (err) {
-         console.error("NotificationController.disablePushNotifications error", err);
+         console.error("❌ Error en disablePushNotifications:", err);
          res.status(500).json({
             success: false,
             message: "Error desactivando notificaciones",
@@ -99,7 +99,7 @@ export const NotificationController = {
             tickets: result.tickets,
          });
       } catch (err) {
-         console.error("NotificationController.sendNotification error", err);
+         console.error("❌ Error en sendNotification:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificación";
          const status = err.message === "NO_PUSH_TOKEN" ? 404 : 500;
          res.status(status).json({ success: false, message });
@@ -130,7 +130,7 @@ export const NotificationController = {
             tickets: result.tickets,
          });
       } catch (err) {
-         console.error("NotificationController.sendNotificationToUser error", err);
+         console.error("❌ Error en sendNotificationToUser:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificaciones";
          const status = err.message === "NO_ACTIVE_DEVICES" ? 404 : 500;
          res.status(status).json({ success: false, message });
@@ -160,7 +160,7 @@ export const NotificationController = {
             sentCount: result.sentCount,
          });
       } catch (err) {
-         console.error("NotificationController.sendBroadcastNotification error", err);
+         console.error("❌ Error en sendBroadcastNotification:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificaciones broadcast";
          const status = err.message === "NO_ACTIVE_DEVICES" ? 404 : 500;
          res.status(status).json({ success: false, message });
@@ -203,7 +203,7 @@ export const NotificationController = {
             tickets: result.tickets,
          });
       } catch (err) {
-         console.error("NotificationController.sendTestNotification error", err);
+         console.error("❌ Error en sendTestNotification:", err);
          res.status(500).json({
             success: false,
             message: "Error enviando notificación de prueba",
@@ -234,7 +234,7 @@ export const NotificationController = {
             tickets: result.tickets,
          });
       } catch (err) {
-         console.error("NotificationController.sendWelcome error", err);
+         console.error("❌ Error en sendWelcome:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificación de bienvenida";
          const status = err.message === "NO_PUSH_TOKEN" ? 404 : 500;
          res.status(status).json({ success: false, message });
@@ -264,7 +264,7 @@ export const NotificationController = {
             sentCount: result.sentCount,
          });
       } catch (err) {
-         console.error("NotificationController.sendPurchase error", err);
+         console.error("❌ Error en sendPurchase:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificación de compra";
          const status = err.message === "NO_ACTIVE_DEVICES" ? 404 : 500;
          res.status(status).json({ success: false, message });
@@ -294,7 +294,7 @@ export const NotificationController = {
             sentCount: result.sentCount,
          });
       } catch (err) {
-         console.error("NotificationController.sendPayment error", err);
+         console.error("❌ Error en sendPayment:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificación de pago";
          const status = err.message === "NO_ACTIVE_DEVICES" ? 404 : 500;
          res.status(status).json({ success: false, message });

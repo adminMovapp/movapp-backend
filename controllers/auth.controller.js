@@ -60,6 +60,7 @@ export const AuthController = {
 
          sendSessionResponse(res, result);
       } catch (error) {
+         console.error("❌ Error en registerUser:", error);
          handleError(res, error);
       }
    },
@@ -77,6 +78,7 @@ export const AuthController = {
 
          sendSessionResponse(res, result);
       } catch (error) {
+         console.error("❌ Error en loginUser:", error);
          handleError(res, error);
       }
    },
@@ -116,6 +118,7 @@ export const AuthController = {
          await AuthService.revokeDevice(deviceId, getRequestInfo(req));
          res.json({ success: true, message: "Dispositivo revocado" });
       } catch (error) {
+         console.error("❌ Error en revokeDevice:", error);
          handleError(res, error);
       }
    },
@@ -128,6 +131,7 @@ export const AuthController = {
          await PasswordService.sendRecoveryCode(email);
          res.json({ success: true, message: "Correo de recuperación enviado" });
       } catch (error) {
+         console.error("❌ Error en sendRecoveryPassword:", error);
          handleError(res, error);
       }
    },
@@ -148,6 +152,7 @@ export const AuthController = {
 
          sendSessionResponse(res, result);
       } catch (error) {
+         console.error("❌ Error en resetPassword:", error);
          handleError(res, error);
       }
    },
