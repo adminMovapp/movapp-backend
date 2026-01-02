@@ -170,6 +170,8 @@ export async function initTables() {
         platform VARCHAR(50),
         model VARCHAR(200),
         app_version VARCHAR(50),
+        push_token VARCHAR(255),
+        push_enabled BOOLEAN DEFAULT TRUE,
         revoked BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -179,6 +181,7 @@ export async function initTables() {
     CREATE INDEX idx_Dispositivos_device_id ON Dispositivos(device_id);
     CREATE INDEX idx_Dispositivos_refresh_hash ON Dispositivos(refresh_hash);
     CREATE INDEX idx_Dispositivos_revoked ON Dispositivos(revoked);
+    CREATE INDEX idx_Dispositivos_push_token ON Dispositivos(push_token);
   `);
 
    await query(`
