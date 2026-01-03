@@ -25,22 +25,29 @@ export const NotificationDAO = {
    },
 
    /**
-    * Desactiva las notificaciones push de un dispositivo
+    * Habilita o desactiva las notificaciones push de un dispositivo
     */
-   async disablePushNotifications(deviceId) {
+   async updatePushNotificationStatus(deviceId, enabled) {
       try {
          const result = await query(
             `UPDATE Dispositivos 
-             SET push_enabled = FALSE, updated_at = NOW()
-             WHERE device_id = $1
+             SET push_enabled = $1, updated_at = NOW()
+             WHERE device_id = $2
              RETURNING *`,
-            [deviceId],
+            [enabled, deviceId],
          );
          return result.rows[0];
       } catch (err) {
-         console.error("NotificationDAO.disablePushNotifications error", err);
+         console.error("NotificationDAO.updatePushNotificationStatus error", err);
          throw err;
       }
+   },
+
+   /**
+    * Desactiva las notificaciones push de un dispositivo (backward compatibility)
+    */
+   async disablePushNotifications(deviceId) {
+      return this.updatePushNotificationStatus(deviceId, false);
    },
 
    /**
@@ -157,6 +164,24 @@ export const NotificationDAO = {
          return result.rows[0];
       } catch (err) {
          console.error("NotificationDAO.removePushToken error", err);
+         throw err;
+      }
+   },
+
+   /**
+    * Obtiene el push_token y push_enabled de un dispositivo
+    */
+   async getDevicePushInfo(deviceId) {
+      try {
+         const result = await query(
+            `SELECT device_id, push_token, push_enabled, device, platform, model 
+             FROM Dispositivos 
+             WHERE device_id = $1`,
+            [deviceId],
+         );
+         return result.rows[0];
+      } catch (err) {
+         console.error("NotificationDAO.getDevicePushInfo error", err);
          throw err;
       }
    },

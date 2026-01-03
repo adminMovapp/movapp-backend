@@ -219,10 +219,28 @@ export const NotificationService = {
    },
 
    /**
-    * Desactiva notificaciones de un dispositivo
+    * Actualiza el estado de las notificaciones de un dispositivo
+    */
+   async updatePushNotificationStatus(deviceId, enabled) {
+      return await NotificationDAO.updatePushNotificationStatus(deviceId, enabled);
+   },
+
+   /**
+    * Desactiva notificaciones de un dispositivo (backward compatibility)
     */
    async disablePushNotifications(deviceId) {
       return await NotificationDAO.disablePushNotifications(deviceId);
+   },
+
+   /**
+    * Obtiene información del push token de un dispositivo
+    */
+   async getDevicePushInfo(deviceId) {
+      const device = await NotificationDAO.getDevicePushInfo(deviceId);
+      if (!device) {
+         throw new Error("DEVICE_NOT_FOUND");
+      }
+      return device;
    },
 
    /**

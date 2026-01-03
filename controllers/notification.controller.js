@@ -47,8 +47,52 @@ export const NotificationController = {
    },
 
    /**
+    * POST /notifications/toggle
+    * Habilita o desactiva las notificaciones push de un dispositivo
+    */
+   async togglePushNotifications(req, res) {
+      try {
+         console.log("📱 [Controller] togglePushNotifications - Petición recibida");
+         const { deviceId, enabled } = req.body;
+         console.log("📋 [Controller] Datos recibidos:", { deviceId, enabled, enabledType: typeof enabled });
+
+         if (!deviceId || enabled === undefined) {
+            console.log("⚠️ [Controller] Faltan parámetros requeridos");
+            return res.status(400).json({
+               success: false,
+               message: "deviceId y enabled son requeridos",
+            });
+         }
+
+         console.log("🔄 [Controller] Llamando a NotificationService.updatePushNotificationStatus...");
+         const device = await NotificationService.updatePushNotificationStatus(deviceId, enabled);
+         console.log("✅ [Controller] Dispositivo actualizado:", {
+            device_id: device?.device_id,
+            push_enabled: device?.push_enabled,
+         });
+
+         const response = {
+            success: true,
+            message: enabled ? "Notificaciones activadas" : "Notificaciones desactivadas",
+            device: {
+               deviceId: device?.device_id,
+               pushEnabled: device?.push_enabled,
+            },
+         };
+         console.log("📤 [Controller] Enviando respuesta:", response);
+         res.json(response);
+      } catch (err) {
+         console.error("❌ Error en togglePushNotifications:", err);
+         res.status(500).json({
+            success: false,
+            message: "Error actualizando notificaciones",
+         });
+      }
+   },
+
+   /**
     * POST /notifications/disable
-    * Desactiva las notificaciones push de un dispositivo
+    * Desactiva las notificaciones push de un dispositivo (backward compatibility)
     */
    async disablePushNotifications(req, res) {
       try {
@@ -297,6 +341,60 @@ export const NotificationController = {
          console.error("❌ Error en sendPayment:", err);
          const message = ERROR_MESSAGES[err.message] || "Error enviando notificación de pago";
          const status = err.message === "NO_ACTIVE_DEVICES" ? 404 : 500;
+         res.status(status).json({ success: false, message });
+      }
+   },
+
+   /**
+    * GET /notifications/device/:deviceId
+    * Obtiene información del push token de un dispositivo
+    */
+   async getDevicePushInfo(req, res) {
+      try {
+         console.log("📱 [Controller] getDevicePushInfo - Petición recibida");
+         const { deviceId } = req.params;
+         console.log("📋 [Controller] Parámetros recibidos:", { deviceId });
+
+         if (!deviceId) {
+            console.log("⚠️ [Controller] deviceId no proporcionado");
+            return res.status(400).json({
+               success: false,
+               message: "deviceId es requerido",
+            });
+         }
+
+         console.log("🔄 [Controller] Llamando a NotificationService.getDevicePushInfo...");
+         const device = await NotificationService.getDevicePushInfo(deviceId);
+         console.log("✅ [Controller] Información del dispositivo obtenida:", {
+            device_id: device.device_id,
+            has_push_token: !!device.push_token,
+            push_token_preview: device.push_token?.substring(0, 30) + "...",
+            push_enabled: device.push_enabled,
+            device: device.device,
+            platform: device.platform,
+            model: device.model,
+         });
+
+         const response = {
+            success: true,
+            device: {
+               deviceId: device.device_id,
+               pushToken: device.push_token,
+               pushEnabled: device.push_enabled,
+               device: device.device,
+               platform: device.platform,
+               model: device.model,
+            },
+         };
+         console.log("📤 [Controller] Enviando respuesta:", {
+            ...response,
+            device: { ...response.device, pushToken: device.push_token?.substring(0, 30) + "..." },
+         });
+         res.json(response);
+      } catch (err) {
+         console.error("❌ Error en getDevicePushInfo:", err);
+         const message = ERROR_MESSAGES[err.message] || "Error obteniendo información del dispositivo";
+         const status = err.message === "DEVICE_NOT_FOUND" ? 404 : 500;
          res.status(status).json({ success: false, message });
       }
    },

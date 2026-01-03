@@ -171,7 +171,7 @@ export async function initTables() {
         model VARCHAR(200),
         app_version VARCHAR(50),
         push_token VARCHAR(255),
-        push_enabled BOOLEAN DEFAULT TRUE,
+        push_enabled BOOLEAN DEFAULT FALSE,
         revoked BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

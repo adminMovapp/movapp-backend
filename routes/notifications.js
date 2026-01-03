@@ -1,13 +1,15 @@
 import express from "express";
 import { NotificationController } from "../controllers/notification.controller.js";
-import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 // Registrar push token (requiere autenticación)
 router.post("/register-token", NotificationController.registerPushToken);
 
-// Desactivar notificaciones
+// Habilitar/Desactivar notificaciones (nuevo endpoint)
+router.post("/toggle", NotificationController.togglePushNotifications);
+
+// Desactivar notificaciones (backward compatibility)
 router.post("/disable", NotificationController.disablePushNotifications);
 
 // Enviar notificación a un dispositivo específico (USO INTERNO)
@@ -26,5 +28,8 @@ router.post("/test", NotificationController.sendTestNotification);
 router.post("/welcome", NotificationController.sendWelcome);
 router.post("/purchase", NotificationController.sendPurchase);
 router.post("/payment", NotificationController.sendPayment);
+
+// Obtener información de push tokens
+router.get("/device/:deviceId", NotificationController.getDevicePushInfo);
 
 export default router;
