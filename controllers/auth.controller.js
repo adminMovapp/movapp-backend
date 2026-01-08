@@ -184,4 +184,36 @@ export const AuthController = {
          handleError(res, error);
       }
    },
+
+   async deleteAccount(req, res) {
+      try {
+         console.log("📱 [Controller] deleteAccount - Petición recibida (borrado lógico)");
+         const userUuid = req.user?.id; // Del token JWT (es el user_uuid)
+         console.log("📋 [Controller] userUuid del token:", userUuid);
+
+         if (!userUuid) {
+            console.log("⚠️ [Controller] Usuario no autenticado");
+            return res.status(401).json({
+               success: false,
+               message: "No autorizado",
+            });
+         }
+
+         console.log("🔄 [Controller] Llamando a AuthService.deleteAccount...");
+         const result = await AuthService.deleteAccount(userUuid, getRequestInfo(req));
+         console.log("✅ [Controller] Cuenta desactivada exitosamente (borrado lógico)");
+
+         res.json({
+            success: true,
+            message: result.message || "Cuenta desactivada exitosamente",
+            user: {
+               email: result.deletedUser?.email,
+               activo: result.deletedUser?.activo,
+            },
+         });
+      } catch (error) {
+         console.error("❌ Error en deleteAccount:", error);
+         handleError(res, error);
+      }
+   },
 };

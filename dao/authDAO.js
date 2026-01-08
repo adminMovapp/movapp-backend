@@ -1,5 +1,5 @@
 // src/dao/authDAO.js
-import { query } from "../db/index.js";
+import { query, pool } from "../db/index.js";
 
 /**
  * AuthDAO - operaciones sobre Usuarios, Dispositivos, Tokens y Logs.
@@ -19,8 +19,18 @@ async function resolveDeviceInternalId(deviceIdentifier) {
 export const AuthDAO = {
    findUserByEmail: async (email) => {
       console.log("🗄️ [DAO] findUserByEmail - Consultando email:", email);
-      const result = await query("SELECT * FROM Usuarios WHERE email = $1", [email]);
+      const result = await query("SELECT * FROM Usuarios WHERE email = $1 AND activo = TRUE", [email]);
       console.log("🗄️ [DAO] Resultado:", result.rows.length > 0 ? "Usuario encontrado" : "No encontrado");
+      return result.rows[0];
+   },
+
+   findUserByEmailIncludingInactive: async (email) => {
+      console.log("🗄️ [DAO] findUserByEmailIncludingInactive - Consultando email:", email);
+      const result = await query("SELECT * FROM Usuarios WHERE email = $1", [email]);
+      console.log(
+         "🗄️ [DAO] Resultado:",
+         result.rows.length > 0 ? `Usuario encontrado (activo: ${result.rows[0]?.activo})` : "No encontrado",
+      );
       return result.rows[0];
    },
 
@@ -36,19 +46,34 @@ export const AuthDAO = {
       return result.rows[0];
    },
 
+   reactivateUser: async ({ userId, nombre, telefono, pais_id, cp, password }) => {
+      console.log("🔄 [DAO] reactivateUser - Reactivando usuario ID:", userId);
+      const result = await query(
+         `UPDATE Usuarios 
+          SET nombre = $1, telefono = $2, pais_id = $3, cp = $4, password = $5, 
+              activo = TRUE, updated_at = CURRENT_TIMESTAMP 
+          WHERE id = $6 
+          RETURNING id, user_uuid, nombre, email, telefono, pais_id, cp, created_at`,
+         [nombre, telefono, pais_id, cp, password, userId],
+      );
+      console.log("✅ [DAO] Usuario reactivado con ID:", result.rows[0]?.id);
+      return result.rows[0];
+   },
+
    upsertDevice: async ({ deviceId, device, platform, model, appVersion, userId, refresh_hash = null }) => {
       console.log("🗄️ [DAO] upsertDevice - deviceId:", deviceId, "userId:", userId);
       const result = await query(
-         `INSERT INTO Dispositivos (device_id, device, platform, model, app_version, user_id, refresh_hash)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)
+         `INSERT INTO Dispositivos (device_id, device, platform, model, app_version, user_id, refresh_hash, revoked)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, FALSE)
                 ON CONFLICT (device_id) DO UPDATE SET
                     platform = EXCLUDED.platform,
                     model = EXCLUDED.model,
                     app_version = EXCLUDED.app_version,
          user_id = EXCLUDED.user_id,
          refresh_hash = COALESCE(EXCLUDED.refresh_hash, Dispositivos.refresh_hash),
+         revoked = FALSE,
          last_seen_at = CURRENT_TIMESTAMP
-       RETURNING id, device_id, user_id, refresh_hash`,
+       RETURNING id, device_id, user_id, refresh_hash, revoked`,
          [deviceId, device, platform, model, appVersion, userId, refresh_hash],
       );
       console.log("✅ [DAO] Dispositivo upserted con ID:", result.rows[0]?.id);
@@ -116,6 +141,14 @@ export const AuthDAO = {
       await query(`UPDATE Dispositivos SET revoked = true WHERE id = $1`, [internalId]);
    },
 
+   getUserDevices: async (userId) => {
+      const result = await query(
+         "SELECT device_id, device, platform, model, revoked FROM Dispositivos WHERE user_id = $1",
+         [userId],
+      );
+      return result.rows;
+   },
+
    insertAuditLog: async ({
       userId = null,
       deviceId = null,
@@ -141,7 +174,12 @@ export const AuthDAO = {
    },
 
    findUserById: async (userId) => {
-      const result = await query("SELECT * FROM Usuarios WHERE id = $1", [userId]);
+      const result = await query("SELECT * FROM Usuarios WHERE id = $1 AND activo = TRUE", [userId]);
+      return result.rows[0];
+   },
+
+   findUserByUuid: async (userUuid) => {
+      const result = await query("SELECT * FROM Usuarios WHERE user_uuid = $1 AND activo = TRUE", [userUuid]);
       return result.rows[0];
    },
 
@@ -168,5 +206,65 @@ export const AuthDAO = {
          [userId],
       );
       return parseInt(result.rows[0].count, 10);
+   },
+
+   /**
+    * Elimina lógicamente una cuenta de usuario (marca como inactivo)
+    * Mantiene todos los registros relacionados para auditoría
+    */
+   deleteUserAccount: async (userUuid) => {
+      console.log("🗑️ [DAO] deleteUserAccount - Borrado lógico de usuario UUID:", userUuid);
+
+      // Iniciar transacción para marcar usuario como inactivo
+      const client = await pool.connect();
+      try {
+         await client.query("BEGIN");
+
+         // Obtener el ID interno del usuario primero
+         const userResult = await client.query("SELECT id FROM Usuarios WHERE user_uuid = $1 AND activo = TRUE", [
+            userUuid,
+         ]);
+
+         if (!userResult.rows.length) {
+            await client.query("ROLLBACK");
+            console.log("⚠️ [DAO] Usuario no encontrado o ya inactivo");
+            return null;
+         }
+
+         const userId = userResult.rows[0].id;
+
+         // Marcar usuario como inactivo (borrado lógico)
+         const result = await client.query(
+            "UPDATE Usuarios SET activo = FALSE, updated_at = CURRENT_TIMESTAMP WHERE user_uuid = $1 RETURNING user_uuid, email, activo",
+            [userUuid],
+         );
+         console.log("✅ [DAO] Usuario marcado como inactivo:", result.rows[0]);
+
+         // Revocar todos los dispositivos asociados
+         await client.query(
+            "UPDATE Dispositivos SET revoked = TRUE, push_enabled = FALSE, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1",
+            [userId],
+         );
+         console.log("✅ [DAO] Dispositivos revocados");
+
+         // Eliminar tokens de refresh activos (por seguridad)
+         await client.query("DELETE FROM Refresh_Tokens WHERE user_id = $1", [userId]);
+         console.log("✅ [DAO] Refresh tokens eliminados");
+
+         // Eliminar tokens de recuperación de contraseña pendientes
+         await client.query("DELETE FROM Password_Reset_Tokens WHERE user_id = $1", [userId]);
+         console.log("✅ [DAO] Password reset tokens eliminados");
+
+         // Los Audit_Logs se mantienen para historial completo
+
+         await client.query("COMMIT");
+         return result.rows[0];
+      } catch (error) {
+         await client.query("ROLLBACK");
+         console.error("❌ [DAO] Error en borrado lógico:", error);
+         throw error;
+      } finally {
+         client.release();
+      }
    },
 };

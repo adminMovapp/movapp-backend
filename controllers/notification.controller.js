@@ -128,6 +128,8 @@ export const NotificationController = {
       try {
          const { deviceId, title, body, data } = req.body;
 
+         console.log("\x1b[33m", "sendNotification =>", deviceId, title, body, data);
+
          if (!deviceId || !title || !body) {
             return res.status(400).json({
                success: false,
@@ -231,6 +233,9 @@ export const NotificationController = {
             title: "Notificación de prueba 🔔",
             body: "Esta es una notificación de prueba desde MovApp",
             data: { type: "test" },
+            channelId: "default", // ⚠️⚠️⚠️ AGREGAR ESTO
+            sound: "default",
+            priority: "high",
          });
 
          if (!result.success) {
@@ -243,7 +248,7 @@ export const NotificationController = {
 
          res.json({
             success: true,
-            message: "Notificación de prueba enviada",
+            message: "Notificación de prueba enviada v1",
             tickets: result.tickets,
          });
       } catch (err) {

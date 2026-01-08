@@ -17,9 +17,11 @@ export const AuthService = {
       //console.log("📋 [Service] deviceInfo:", deviceInfo);
 
       //console.log("🔍 [Service] Verificando si el email ya existe...");
-      const existing = await AuthDAO.findUserByEmail(userData.email);
+      const existing = await AuthDAO.findUserByEmailIncludingInactive(userData.email);
       //console.log("🔍 [Service] Usuario existente:", existing ? "SÍ" : "NO");
-      if (existing) {
+
+      if (existing && existing.activo) {
+         // Usuario activo ya existe
          throw new Error("USER_ALREADY_EXISTS");
       }
 
@@ -27,12 +29,28 @@ export const AuthService = {
       const hashedPassword = await this.preparePassword(userData.password);
       //console.log("✅ [Service] Contraseña hasheada");
 
-      //console.log("💾 [Service] Insertando usuario en BD...");
-      const user = await AuthDAO.insertUser({
-         ...userData,
-         password: hashedPassword,
-      });
-      //console.log("✅ [Service] Usuario insertado:", { id: user.id, email: user.email });
+      let user;
+      if (existing && !existing.activo) {
+         // Reactivar cuenta inactiva
+         console.log("🔄 [Service] Reactivando cuenta inactiva para:", userData.email);
+         user = await AuthDAO.reactivateUser({
+            userId: existing.id,
+            nombre: userData.nombre,
+            telefono: userData.telefono,
+            pais_id: userData.pais_id,
+            cp: userData.cp,
+            password: hashedPassword,
+         });
+         console.log("✅ [Service] Cuenta reactivada exitosamente");
+      } else {
+         // Insertar nuevo usuario
+         //console.log("💾 [Service] Insertando usuario en BD...");
+         user = await AuthDAO.insertUser({
+            ...userData,
+            password: hashedPassword,
+         });
+         //console.log("✅ [Service] Usuario insertado:", { id: user.id, email: user.email });
+      }
 
       // Enviar email de bienvenida (no fatal)
       try {
@@ -49,7 +67,7 @@ export const AuthService = {
       await logAction({
          userId: user.id,
          deviceId: deviceInfo?.deviceId,
-         action: "registerUser",
+         action: existing && !existing.activo ? "reactivateAccount" : "registerUser",
          success: true,
          ...requestInfo,
       });
@@ -164,13 +182,60 @@ export const AuthService = {
    async revokeDevice(deviceId, requestInfo) {
       await AuthDAO.revokeDeviceById(deviceId);
 
-      await AuthDAO.insertAuditLog({
-         deviceId,
+      // await AuthDAO.insertAuditLog({
+      //    deviceId,
+      //    action: "revokeDevice",
+      //    success: true,
+      //    ...requestInfo,
+      // });
+      const device = await AuthDAO.findDeviceById(deviceId);
+      if (!device) {
+         throw new Error("DEVICE_NOT_FOUND");
+      }
+      await logAction({
+         userId: user.id,
+         deviceId: deviceInfo?.deviceId,
          action: "revokeDevice",
          success: true,
          ...requestInfo,
       });
 
       return { success: true };
+   },
+
+   /**
+    * Desactiva una cuenta de usuario (borrado lógico)
+    * Mantiene los registros para auditoría
+    */
+   async deleteAccount(userUuid, requestInfo) {
+      console.log("🔧 [Service] deleteAccount - Iniciando desactivación de cuenta (borrado lógico)");
+      console.log("📋 [Service] userUuid:", userUuid);
+
+      // Verificar que el usuario existe y está activo
+      const user = await AuthDAO.findUserByUuid(userUuid);
+      if (!user) {
+         throw new Error("USER_NOT_FOUND");
+      }
+
+      console.log("🗑️ [Service] Usuario encontrado, procediendo a desactivar...");
+
+      // Obtener dispositivos del usuario antes de revocarlos
+      const devices = await AuthDAO.getUserDevices(user.id);
+      console.log("📱 [Service] Dispositivos encontrados:", devices.length);
+
+      // Registrar acción antes de desactivar (usando el ID interno del usuario y primer dispositivo si existe)
+      await logAction({
+         userId: user.id,
+         deviceId: devices[0]?.device_id || null,
+         action: "deleteAccount",
+         success: true,
+         ...requestInfo,
+      });
+
+      // Marcar cuenta como inactiva (borrado lógico)
+      const deletedUser = await AuthDAO.deleteUserAccount(userUuid);
+      console.log("✅ [Service] Cuenta desactivada exitosamente (borrado lógico)");
+
+      return { success: true, deletedUser, message: "Cuenta desactivada. Los registros se mantienen para auditoría." };
    },
 };

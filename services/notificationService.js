@@ -32,7 +32,10 @@ export const NotificationService = {
             body,
             data,
             priority: "high",
+            channelId: "default",
          };
+
+         console.log("\x1b[36m", "message =>", message);
 
          const chunks = expo.chunkPushNotifications([message]);
          const tickets = [];
@@ -46,7 +49,7 @@ export const NotificationService = {
             }
          }
 
-         console.log("✅ Notificación enviada:", { title, body, tickets });
+         // console.log("✅ Notificación enviada:", { title, body, tickets });
          return { success: true, tickets };
       } catch (error) {
          console.error("❌ Error en sendPushNotification:", error);
@@ -66,7 +69,6 @@ export const NotificationService = {
                console.warn("⚠️ Token push inválido omitido:", pushToken);
                continue;
             }
-
             messages.push({
                to: pushToken,
                sound: "default",
@@ -74,6 +76,7 @@ export const NotificationService = {
                body,
                data,
                priority: "high",
+               channelId: "default",
             });
          }
 
@@ -183,7 +186,10 @@ export const NotificationService = {
     * Envía notificación a un dispositivo específico
     */
    async sendToDevice(deviceId, title, body, data = {}) {
+      console.log("\x1b[34m", "sendToDevice =>", deviceId, title, body, data);
+
       const pushToken = await NotificationDAO.getPushTokenByDeviceId(deviceId);
+      console.log("\x1b[34m", "pushToken =>", pushToken);
 
       if (!pushToken) {
          throw new Error("NO_PUSH_TOKEN");
