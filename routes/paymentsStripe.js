@@ -5,8 +5,7 @@ const router = express.Router();
 
 router.post("/create-intent", PaymentsStripeController.createIntent);
 
-// router.post("/webhook", express.raw({ type: "application/json" }), PaymentsStripeController.webhook);
-router.post("/webhook", PaymentsStripeController.webhook);
+router.post("/webhook", express.raw({ type: "application/json" }), PaymentsStripeController.webhook);
 
 router.post("/webhook-test", express.json(), PaymentsStripeController.webhookTest);
 
