@@ -65,7 +65,7 @@ export const PaymentsStripeController = {
 
    async webhook(req, res) {
       const sig = req.headers["stripe-signature"];
-      const raw = req.rawBody;
+      const raw = req.body;
       console.log("\x1b[32m", "Webhooks =>");
       if (!raw) {
          console.error("Webhook signature/parse error: raw body missing");
