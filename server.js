@@ -43,6 +43,7 @@ const DB_PORT = process.env.PG_PORT || 5432;
 
 const SMTP_HOST = process.env.SMTP_HOST;
 const STRIPE_SECRET = process.env.STRIPE_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 app.get("/status-api", (req, res) => {
    res.status(200).json({
@@ -59,7 +60,7 @@ app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 
-//initTables();
+initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
@@ -81,5 +82,7 @@ app.listen(PORT, () => {
 
    console.log("SMTP_HOST:", SMTP_HOST);
    console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 10) + "..." : "No definido");
+   console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 10) + "..." : "No definido");
+
    console.log(`---------------------------`);
 });
