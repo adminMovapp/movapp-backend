@@ -23,16 +23,20 @@ app.use(
    }),
 );
 
-app.use("/payments/stripe", paymentsStripeRouter);
 
-app.use(
-   express.json({
-      verify: (req, res, buf) => {
-         req.rawBody = buf;
-      },
-   }),
-);
+// Middleware global excepto para Stripe webhook
 app.use(express.urlencoded({ extended: true }));
+
+// Stripe webhook: usar express.raw SOLO en esa ruta
+app.use("/payments/stripe/webhook", express.raw({ type: "application/json" }));
+
+// Para el resto de rutas usar express.json normalmente
+app.use((req, res, next) => {
+   if (req.originalUrl === "/payments/stripe/webhook") {
+      return next();
+   }
+   express.json()(req, res, next);
+});
 
 // Constantes para puertos y configuración
 const PORT = process.env.PORT || 3000;
@@ -58,7 +62,7 @@ app.get("/status-api", (req, res) => {
 app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
-// app.use("/payments/stripe", paymentsStripeRouter);
+app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 
