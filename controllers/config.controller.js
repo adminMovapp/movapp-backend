@@ -19,9 +19,8 @@ export const ConfigController = {
    },
    getPrices: async (req, res) => {
       try {
-         // console.error("\x1b[35m", "getPrices =>", req.query);
-
          const idcountry = parseInt(req.query.idcountry, 10);
+         console.error("\x1b[35m", "getPrices =>", idcountry);
          const prices = await ConfigService.getPrices(idcountry);
          if (!prices || (Array.isArray(prices) && prices.length === 0)) {
             return res.json({ success: false, message: "No se encontraron precios" });
