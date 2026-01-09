@@ -41,6 +41,9 @@ const DB_PORT = process.env.PG_PORT || 5432;
 // const APP_BASE_URL = process.env.APP_BASE_URL;
 // const MERCADOPAGO_URL_WEBHOOK = process.env.MERCADOPAGO_URL_WEBHOOK;
 
+const SMTP_HOST = process.env.SMTP_HOST;
+const STRIPE_SECRET = process.env.STRIPE_SECRET;
+
 app.get("/status-api", (req, res) => {
    res.status(200).json({
       status: "ok",
@@ -56,7 +59,7 @@ app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 
-//initTables();
+initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
@@ -74,5 +77,9 @@ app.listen(PORT, () => {
    console.log("Zona horaria:", process.env.TZ);
    console.log("Fecha/hora:", new Date().toLocaleString());
 
+   console.log(`---------------------------`);
+
+   console.log("SMTP_HOST:", SMTP_HOST);
+   console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 10) + "..." : "No definido");
    console.log(`---------------------------`);
 });
