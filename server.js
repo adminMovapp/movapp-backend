@@ -23,6 +23,8 @@ app.use(
    }),
 );
 
+app.use("/payments/stripe", paymentsStripeRouter);
+
 app.use(
    express.json({
       verify: (req, res, buf) => {
@@ -56,7 +58,7 @@ app.get("/status-api", (req, res) => {
 app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
-app.use("/payments/stripe", paymentsStripeRouter);
+// app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 

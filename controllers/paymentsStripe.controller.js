@@ -64,6 +64,9 @@ export const PaymentsStripeController = {
    },
 
    async webhook(req, res) {
+      console.log("🔍 Body is Buffer:", Buffer.isBuffer(req.body));
+      console.log("🔍 Body length:", req.body?.length);
+
       const sig = req.headers["stripe-signature"];
       const raw = req.body;
       console.log("\x1b[32m", "Webhooks =>");
