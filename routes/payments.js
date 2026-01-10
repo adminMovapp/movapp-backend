@@ -8,20 +8,20 @@ const router = Router();
 
 // Crear preferencia de pago
 router.post("/create-preference", async (req, res) => {
-   console.log("🔍 Body completo:", JSON.stringify(req.body, null, 2));
+   // console.log("🔍 Body completo:", JSON.stringify(req.body, null, 2));
 
    try {
       let payload;
 
       // Verificar si los datos vienen cifrados
       if (req.body.data) {
-         console.log("📥 Recibiendo datos cifrados...");
+         // console.log("📥 Recibiendo datos cifrados...");
          payload = decryptData(req.body.data);
-         console.log("🔓 Datos descifrados:", payload);
+         // console.log("🔓 Datos descifrados:", payload);
       } else {
          // Para compatibilidad con requests no cifrados
          payload = req.body;
-         console.log("📥 Recibiendo datos sin cifrar:", payload);
+         // console.log("📥 Recibiendo datos sin cifrar:", payload);
       }
 
       const pedido = await crearPedido(payload);
@@ -36,7 +36,7 @@ router.post("/create-preference", async (req, res) => {
 
 // Webhook de Mercado Pago
 router.post("/webhook", async (req, res) => {
-   console.log("📩 Webhook recibido:", req.body);
+   // console.log("📩 Webhook recibido:", req.body);
    try {
       const { type, data } = req.body;
 

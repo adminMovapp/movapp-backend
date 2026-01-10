@@ -52,24 +52,24 @@ export const NotificationController = {
     */
    async togglePushNotifications(req, res) {
       try {
-         console.log("📱 [Controller] togglePushNotifications - Petición recibida");
+         // console.log("📱 [Controller] togglePushNotifications - Petición recibida");
          const { deviceId, enabled } = req.body;
-         console.log("📋 [Controller] Datos recibidos:", { deviceId, enabled, enabledType: typeof enabled });
+         // console.log("📋 [Controller] Datos recibidos:", { deviceId, enabled, enabledType: typeof enabled });
 
          if (!deviceId || enabled === undefined) {
-            console.log("⚠️ [Controller] Faltan parámetros requeridos");
+            // console.log("⚠️ [Controller] Faltan parámetros requeridos");
             return res.status(400).json({
                success: false,
                message: "deviceId y enabled son requeridos",
             });
          }
 
-         console.log("🔄 [Controller] Llamando a NotificationService.updatePushNotificationStatus...");
+         // console.log("🔄 [Controller] Llamando a NotificationService.updatePushNotificationStatus...");
          const device = await NotificationService.updatePushNotificationStatus(deviceId, enabled);
-         console.log("✅ [Controller] Dispositivo actualizado:", {
-            device_id: device?.device_id,
-            push_enabled: device?.push_enabled,
-         });
+         // console.log("✅ [Controller] Dispositivo actualizado:", {
+         //    device_id: device?.device_id,
+         //    push_enabled: device?.push_enabled,
+         // });
 
          const response = {
             success: true,
@@ -79,7 +79,7 @@ export const NotificationController = {
                pushEnabled: device?.push_enabled,
             },
          };
-         console.log("📤 [Controller] Enviando respuesta:", response);
+         // console.log("📤 [Controller]  Enviando respuesta:", response);
          res.json(response);
       } catch (err) {
          console.error("❌ Error en togglePushNotifications:", err);
@@ -128,7 +128,7 @@ export const NotificationController = {
       try {
          const { deviceId, title, body, data } = req.body;
 
-         console.log("\x1b[33m", "sendNotification =>", deviceId, title, body, data);
+         // console.log("\x1b[33m", "sendNotification =>", deviceId, title, body, data);
 
          if (!deviceId || !title || !body) {
             return res.status(400).json({
@@ -356,29 +356,29 @@ export const NotificationController = {
     */
    async getDevicePushInfo(req, res) {
       try {
-         console.log("📱 [Controller] getDevicePushInfo - Petición recibida");
+         // console.log("📱 [Controller] getDevicePushInfo - Petición recibida");
          const { deviceId } = req.params;
-         console.log("📋 [Controller] Parámetros recibidos:", { deviceId });
+         // console.log("📋 [Controller] Parámetros recibidos:", { deviceId });
 
          if (!deviceId) {
-            console.log("⚠️ [Controller] deviceId no proporcionado");
+            // console.log("⚠️ [Controller] deviceId no proporcionado");
             return res.status(400).json({
                success: false,
                message: "deviceId es requerido",
             });
          }
 
-         console.log("🔄 [Controller] Llamando a NotificationService.getDevicePushInfo...");
+         // console.log("🔄 [Controller] Llamando a NotificationService.getDevicePushInfo...");
          const device = await NotificationService.getDevicePushInfo(deviceId);
-         console.log("✅ [Controller] Información del dispositivo obtenida:", {
-            device_id: device.device_id,
-            has_push_token: !!device.push_token,
-            push_token_preview: device.push_token?.substring(0, 30) + "...",
-            push_enabled: device.push_enabled,
-            device: device.device,
-            platform: device.platform,
-            model: device.model,
-         });
+         // console.log("✅ [Controller] Información del dispositivo obtenida:", {
+         //    device_id: device.device_id,
+         //    has_push_token: !!device.push_token,
+         //    push_token_preview: device.push_token?.substring(0, 30) + "...",
+         //    push_enabled: device.push_enabled,
+         //    device: device.device,
+         //    platform: device.platform,
+         //    model: device.model,
+         // });
 
          const response = {
             success: true,
@@ -391,10 +391,10 @@ export const NotificationController = {
                model: device.model,
             },
          };
-         console.log("📤 [Controller] Enviando respuesta:", {
-            ...response,
-            device: { ...response.device, pushToken: device.push_token?.substring(0, 30) + "..." },
-         });
+         // console.log("📤 [Controller] Enviando respuesta:", {
+         //    ...response,
+         //    device: { ...response.device, pushToken: device.push_token?.substring(0, 30) + "..." },
+         // });
          res.json(response);
       } catch (err) {
          console.error("❌ Error en getDevicePushInfo:", err);

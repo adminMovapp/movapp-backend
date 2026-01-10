@@ -61,7 +61,7 @@ export const TokenService = {
             const hours = Math.floor(timeLeft / 3600);
             const minutes = Math.floor((timeLeft % 3600) / 60);
             const seconds = timeLeft % 60;
-            console.log("\x1b[32m", `✅ Token válido - Tiempo restante: ${hours}h ${minutes}m ${seconds}s`);
+            // console.log("\x1b[32m", `✅ Token válido - Tiempo restante: ${hours}h ${minutes}m ${seconds}s`);
          } else {
             console.log("\x1b[31m", "⚠️ Token expirado");
          }

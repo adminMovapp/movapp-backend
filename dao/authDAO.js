@@ -18,36 +18,36 @@ async function resolveDeviceInternalId(deviceIdentifier) {
 
 export const AuthDAO = {
    findUserByEmail: async (email) => {
-      console.log("🗄️ [DAO] findUserByEmail - Consultando email:", email);
+      // console.log("🗄️ [DAO] findUserByEmail - Consultando email:", email);
       const result = await query("SELECT * FROM Usuarios WHERE email = $1 AND activo = TRUE", [email]);
-      console.log("🗄️ [DAO] Resultado:", result.rows.length > 0 ? "Usuario encontrado" : "No encontrado");
+      // console.log("🗄️ [DAO] Resultado:", result.rows.length > 0 ? "Usuario encontrado" : "No encontrado");
       return result.rows[0];
    },
 
    findUserByEmailIncludingInactive: async (email) => {
-      console.log("🗄️ [DAO] findUserByEmailIncludingInactive - Consultando email:", email);
+      // console.log("🗄️ [DAO] findUserByEmailIncludingInactive - Consultando email:", email);
       const result = await query("SELECT * FROM Usuarios WHERE email = $1", [email]);
-      console.log(
-         "🗄️ [DAO] Resultado:",
-         result.rows.length > 0 ? `Usuario encontrado (activo: ${result.rows[0]?.activo})` : "No encontrado",
-      );
+      // console.log(
+      //    "🗄️ [DAO] Resultado:",
+      //    result.rows.length > 0 ? `Usuario encontrado (activo: ${result.rows[0]?.activo})` : "No encontrado",
+      // );
       return result.rows[0];
    },
 
    insertUser: async ({ nombre, email, telefono, pais_id, cp, password }) => {
-      console.log("🗄️ [DAO] insertUser - Insertando usuario:", { nombre, email, telefono, pais_id, cp });
+      // console.log("🗄️ [DAO] insertUser - Insertando usuario:", { nombre, email, telefono, pais_id, cp });
       const result = await query(
          `INSERT INTO Usuarios (nombre, email, telefono, pais_id, cp, password)
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING id, user_uuid, nombre, email, telefono, pais_id, cp, created_at`,
          [nombre, email, telefono, pais_id, cp, password],
       );
-      console.log("✅ [DAO] Usuario insertado con ID:", result.rows[0]?.id);
+      // console.log("✅ [DAO] Usuario insertado con ID:", result.rows[0]?.id);
       return result.rows[0];
    },
 
    reactivateUser: async ({ userId, nombre, telefono, pais_id, cp, password }) => {
-      console.log("🔄 [DAO] reactivateUser - Reactivando usuario ID:", userId);
+      // console.log("🔄 [DAO] reactivateUser - Reactivando usuario ID:", userId);
       const result = await query(
          `UPDATE Usuarios 
           SET nombre = $1, telefono = $2, pais_id = $3, cp = $4, password = $5, 
@@ -56,12 +56,12 @@ export const AuthDAO = {
           RETURNING id, user_uuid, nombre, email, telefono, pais_id, cp, created_at`,
          [nombre, telefono, pais_id, cp, password, userId],
       );
-      console.log("✅ [DAO] Usuario reactivado con ID:", result.rows[0]?.id);
+      // console.log("✅ [DAO] Usuario reactivado con ID:", result.rows[0]?.id);
       return result.rows[0];
    },
 
    upsertDevice: async ({ deviceId, device, platform, model, appVersion, userId, refresh_hash = null }) => {
-      console.log("🗄️ [DAO] upsertDevice - deviceId:", deviceId, "userId:", userId);
+      // console.log("🗄️ [DAO] upsertDevice - deviceId:", deviceId, "userId:", userId);
       const result = await query(
          `INSERT INTO Dispositivos (device_id, device, platform, model, app_version, user_id, refresh_hash, revoked)
              VALUES ($1,$2,$3,$4,$5,$6,$7, FALSE)
@@ -76,7 +76,7 @@ export const AuthDAO = {
        RETURNING id, device_id, user_id, refresh_hash, revoked`,
          [deviceId, device, platform, model, appVersion, userId, refresh_hash],
       );
-      console.log("✅ [DAO] Dispositivo upserted con ID:", result.rows[0]?.id);
+      // console.log("✅ [DAO] Dispositivo upserted con ID:", result.rows[0]?.id);
       return result.rows[0];
    },
 
@@ -213,7 +213,7 @@ export const AuthDAO = {
     * Mantiene todos los registros relacionados para auditoría
     */
    deleteUserAccount: async (userUuid) => {
-      console.log("🗑️ [DAO] deleteUserAccount - Borrado lógico de usuario UUID:", userUuid);
+      // console.log("🗑️ [DAO] deleteUserAccount - Borrado lógico de usuario UUID:", userUuid);
 
       // Iniciar transacción para marcar usuario como inactivo
       const client = await pool.connect();
@@ -227,7 +227,7 @@ export const AuthDAO = {
 
          if (!userResult.rows.length) {
             await client.query("ROLLBACK");
-            console.log("⚠️ [DAO] Usuario no encontrado o ya inactivo");
+            // console.log("⚠️ [DAO] Usuario no encontrado o ya inactivo");
             return null;
          }
 
@@ -238,22 +238,22 @@ export const AuthDAO = {
             "UPDATE Usuarios SET activo = FALSE, updated_at = CURRENT_TIMESTAMP WHERE user_uuid = $1 RETURNING user_uuid, email, activo",
             [userUuid],
          );
-         console.log("✅ [DAO] Usuario marcado como inactivo:", result.rows[0]);
+         // console.log("✅ [DAO] Usuario marcado como inactivo:", result.rows[0]);
 
          // Revocar todos los dispositivos asociados
          await client.query(
             "UPDATE Dispositivos SET revoked = TRUE, push_enabled = FALSE, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1",
             [userId],
          );
-         console.log("✅ [DAO] Dispositivos revocados");
+         // console.log("✅ [DAO] Dispositivos revocados");
 
          // Eliminar tokens de refresh activos (por seguridad)
          await client.query("DELETE FROM Refresh_Tokens WHERE user_id = $1", [userId]);
-         console.log("✅ [DAO] Refresh tokens eliminados");
+         // console.log("✅ [DAO] Refresh tokens eliminados");
 
          // Eliminar tokens de recuperación de contraseña pendientes
          await client.query("DELETE FROM Password_Reset_Tokens WHERE user_id = $1", [userId]);
-         console.log("✅ [DAO] Password reset tokens eliminados");
+         // console.log("✅ [DAO] Password reset tokens eliminados");
 
          // Los Audit_Logs se mantienen para historial completo
 

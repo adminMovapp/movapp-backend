@@ -16,7 +16,7 @@ export const PaymentsStripeController = {
             items = [],
          } = req.body;
 
-         console.log("\x1b[32m", "createIntent =>", paisId);
+         // console.log("\x1b[32m", "createIntent =>", paisId);
 
          if (!email || !amount)
             return res.status(400).json({ success: false, message: "email y amount son requeridos" });
@@ -64,12 +64,12 @@ export const PaymentsStripeController = {
    },
 
    async webhook(req, res) {
-      console.log("🔍 Body is Buffer:", Buffer.isBuffer(req.body));
-      console.log("🔍 Body length:", req.body?.length);
+      // console.log("🔍 Body is Buffer:", Buffer.isBuffer(req.body));
+      // console.log("🔍 Body length:", req.body?.length);
 
       const sig = req.headers["stripe-signature"];
       const raw = req.body;
-      console.log("\x1b[32m", "Webhooks =>");
+      // console.log("\x1b[32m", "Webhooks =>");
       if (!raw) {
          console.error("Webhook signature/parse error: raw body missing");
          return res

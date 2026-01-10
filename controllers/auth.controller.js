@@ -49,30 +49,17 @@ function handleError(res, error) {
 export const AuthController = {
    async registerUser(req, res) {
       try {
-         console.log("📱 [Controller] registerUser - Petición recibida");
+         // console.log("📱 [Controller] registerUser - Petición recibida");
          const { nombre, email, telefono, pais_id, cp, password } = req.body;
          const { deviceId, device, platform, model, appVersion } = req.body;
-         console.log("📋 [Controller] Datos recibidos:", {
-            nombre,
-            email,
-            telefono,
-            pais_id,
-            cp,
-            hasPassword: !!password,
-            deviceId,
-            device,
-            platform,
-            model,
-            appVersion,
-         });
 
-         console.log("🔄 [Controller] Llamando a AuthService.register...");
+         // console.log("🔄 [Controller] Llamando a AuthService.register...");
          const result = await AuthService.register(
             { nombre, email, telefono, pais_id, cp, password },
             { deviceId, device, platform, model, appVersion },
             getRequestInfo(req),
          );
-         console.log("✅ [Controller] Registro exitoso, enviando respuesta");
+         // console.log("✅ [Controller] Registro exitoso, enviando respuesta");
 
          sendSessionResponse(res, result);
       } catch (error) {
@@ -83,26 +70,17 @@ export const AuthController = {
 
    async loginUser(req, res) {
       try {
-         console.log("📱 [Controller] loginUser - Petición recibida");
+         // console.log("📱 [Controller] loginUser - Petición recibida");
          const { email, password } = req.body;
          const { deviceId, device, platform, model, appVersion } = req.body;
-         console.log("📋 [Controller] Datos recibidos:", {
-            email,
-            hasPassword: !!password,
-            deviceId,
-            device,
-            platform,
-            model,
-            appVersion,
-         });
 
-         console.log("🔄 [Controller] Llamando a AuthService.login...");
+         // console.log("🔄 [Controller] Llamando a AuthService.login...");
          const result = await AuthService.login(
             { email, password },
             { deviceId, device, platform, model, appVersion },
             getRequestInfo(req),
          );
-         console.log("✅ [Controller] Login exitoso, enviando respuesta");
+         // console.log("✅ [Controller] Login exitoso, enviando respuesta");
 
          sendSessionResponse(res, result);
       } catch (error) {
@@ -115,19 +93,19 @@ export const AuthController = {
       try {
          const { refreshToken, deviceId } = req.body;
 
-         console.log("🔄 Refresh Token - Datos recibidos:", {
-            refreshToken: refreshToken?.substring(0, 20) + "...",
-            deviceId,
-            body: req.body,
-         });
+         // console.log("🔄 Refresh Token - Datos recibidos:", {
+         //    refreshToken: refreshToken?.substring(0, 20) + "...",
+         //    deviceId,
+         //    body: req.body,
+         // });
 
          const result = await AuthService.refreshAccessToken(refreshToken, deviceId);
 
-         console.log("✅ Refresh Token - Respuesta:", {
-            accessToken: result.accessToken?.substring(0, 30) + "...",
-            hasRefreshToken: !!result.refreshToken,
-            ...result,
-         });
+         // console.log("✅ Refresh Token - Respuesta:", {
+         //    accessToken: result.accessToken?.substring(0, 30) + "...",
+         //    hasRefreshToken: !!result.refreshToken,
+         //    ...result,
+         // });
 
          res.json({ success: true, ...result });
       } catch (error) {
@@ -187,21 +165,21 @@ export const AuthController = {
 
    async deleteAccount(req, res) {
       try {
-         console.log("📱 [Controller] deleteAccount - Petición recibida (borrado lógico)");
+         // console.log("📱 [Controller] deleteAccount - Petición recibida (borrado lógico)");
          const userUuid = req.user?.id; // Del token JWT (es el user_uuid)
-         console.log("📋 [Controller] userUuid del token:", userUuid);
+         // console.log("📋 [Controller] userUuid del token:", userUuid);
 
          if (!userUuid) {
-            console.log("⚠️ [Controller] Usuario no autenticado");
+            // console.log("⚠️ [Controller] Usuario no autenticado");
             return res.status(401).json({
                success: false,
                message: "No autorizado",
             });
          }
 
-         console.log("🔄 [Controller] Llamando a AuthService.deleteAccount...");
+         // console.log("🔄 [Controller] Llamando a AuthService.deleteAccount...");
          const result = await AuthService.deleteAccount(userUuid, getRequestInfo(req));
-         console.log("✅ [Controller] Cuenta desactivada exitosamente (borrado lógico)");
+         // console.log("✅ [Controller] Cuenta desactivada exitosamente (borrado lógico)");
 
          res.json({
             success: true,
