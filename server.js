@@ -51,6 +51,7 @@ const DB_PORT = process.env.PG_PORT || 5432;
 
 const SMTP_HOST = process.env.SMTP_HOST;
 const STRIPE_SECRET = process.env.STRIPE_SECRET;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 app.get("/status-api", (req, res) => {
@@ -90,6 +91,11 @@ app.listen(PORT, () => {
 
    console.log("SMTP_HOST:", SMTP_HOST);
    console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 5) + "..." : "No definido");
+   console.log(
+      "STRIPE_WEBHOOK_SECRET:",
+      STRIPE_WEBHOOK_SECRET ? STRIPE_WEBHOOK_SECRET.substring(0, 5) + "..." : "No definido",
+   );
+
    console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 5) + "..." : "No definido");
 
    console.log(`---------------------------`);
