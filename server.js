@@ -23,20 +23,22 @@ app.use(
    }),
 );
 
-
-// Middleware global excepto para Stripe webhook
-app.use(express.urlencoded({ extended: true }));
-
-// Stripe webhook: usar express.raw SOLO en esa ruta
-app.use("/payments/stripe/webhook", express.raw({ type: "application/json" }));
-
-// Para el resto de rutas usar express.json normalmente
 app.use((req, res, next) => {
+   // Si es el webhook de Stripe, usar express.raw()
    if (req.originalUrl === "/payments/stripe/webhook") {
-      return next();
+      express.raw({ type: "application/json" })(req, res, next);
    }
-   express.json()(req, res, next);
+   // Para todo lo demás, usar express.json()
+   else {
+      express.json({
+         verify: (req, res, buf) => {
+            req.rawBody = buf;
+         },
+      })(req, res, next);
+   }
 });
+
+app.use(express.urlencoded({ extended: true }));
 
 // Constantes para puertos y configuración
 const PORT = process.env.PORT || 3000;
@@ -66,7 +68,7 @@ app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 
-initTables();
+//initTables();
 
 app.listen(PORT, () => {
    console.log(`✅ Servidor backend corriendo en http://localhost:${PORT}`);
@@ -87,8 +89,8 @@ app.listen(PORT, () => {
    console.log(`---------------------------`);
 
    console.log("SMTP_HOST:", SMTP_HOST);
-   console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 10) + "..." : "No definido");
-   console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 10) + "..." : "No definido");
+   console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 5) + "..." : "No definido");
+   console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 5) + "..." : "No definido");
 
    console.log(`---------------------------`);
 });
