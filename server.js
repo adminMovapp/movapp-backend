@@ -90,13 +90,13 @@ app.listen(PORT, () => {
    console.log(`---------------------------`);
 
    console.log("SMTP_HOST:", SMTP_HOST);
-   console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 5) + "..." : "No definido");
+   console.log("STRIPE_SECRET:", STRIPE_SECRET ? STRIPE_SECRET.substring(0, 15) + "..." : "No definido");
    console.log(
       "STRIPE_WEBHOOK_SECRET:",
-      STRIPE_WEBHOOK_SECRET ? STRIPE_WEBHOOK_SECRET.substring(0, 5) + "..." : "No definido",
+      STRIPE_WEBHOOK_SECRET ? STRIPE_WEBHOOK_SECRET.substring(0, 15) + "..." : "No definido",
    );
 
-   console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 5) + "..." : "No definido");
+   console.log("JWT_SECRET:", JWT_SECRET ? JWT_SECRET.substring(0, 6) + "..." : "No definido");
 
    console.log(`---------------------------`);
 });
