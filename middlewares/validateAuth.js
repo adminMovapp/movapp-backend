@@ -15,7 +15,7 @@ const validateAuthSchema = {
       body("email").isEmail().withMessage("Correo electrónico inválido"),
       body("telefono").isString().withMessage("Teléfono inválido"),
       body("pais_id").isInt({ min: 1 }).withMessage("El país es requerido y debe ser válido"),
-      body("cp").optional().isString().isLength({ min: 3, max: 20 }).withMessage("Código postal inválido"),
+      body("cp").optional().isString().isLength({ min: 1, max: 8 }).withMessage("Código postal inválido"),
       body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
 
       body("deviceId").notEmpty().isString().withMessage("deviceId debe ser string"),
