@@ -16,7 +16,7 @@ const validateAuthSchema = {
       body("telefono").isString().withMessage("Teléfono inválido"),
       body("pais_id").isInt({ min: 1 }).withMessage("El país es requerido y debe ser válido"),
       body("pais_id")
-         .custom((value) => parseInt(value) === 1)
+         .isIn([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
          .withMessage("La región seleccionada no se encuentra disponible por el momento"),
       body("cp").optional().isString().isLength({ min: 1, max: 8 }).withMessage("Código postal inválido"),
       body("password").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),

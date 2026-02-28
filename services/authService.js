@@ -20,7 +20,8 @@ export const AuthService = {
       const existing = await AuthDAO.findUserByEmailIncludingInactive(userData.email);
       //console.log("🔍 [Service] Usuario existente:", existing ? "SÍ" : "NO");
 
-      if (existing && existing.activo) {
+      // if (existing && existing.activo) {
+      if (existing) {
          // Usuario activo ya existe
          throw new Error("USER_ALREADY_EXISTS");
       }
