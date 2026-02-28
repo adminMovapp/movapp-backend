@@ -117,10 +117,11 @@ export const OrdersDAO = {
    async getPaidOrdersByUserUuid(userUuid) {
       try {
          const result = await query(
-            `SELECT od.* 
+            `SELECT od.*,o.currency,p.simbolo
             FROM Ordenes o
             INNER JOIN ordenes_detalle od ON o.id = od.order_id
             INNER JOIN Usuarios u ON o.user_id = u.id
+            INNER JOIN Paises p ON o.pais_id = p.id
              WHERE u.user_uuid = $1 AND o.payment_status = 'paid'
              ORDER BY o.created_at DESC`,
             [userUuid],

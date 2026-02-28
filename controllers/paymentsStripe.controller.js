@@ -12,7 +12,7 @@ export const PaymentsStripeController = {
             paisId = null,
             amount,
             currency = "mxn",
-            description = "Compra aplicacion MovApp",
+            description = "Compra desde la app movil",
             items = [],
          } = req.body;
 
