@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+   backend:
+      build: .
+      container_name: movapp-backend
+      ports:
+         - "5005:3005"
+      env_file:
+         - .env.docker
+      environment:
+         - TZ=America/Mexico_City
+      networks:
+         - movapp-network
+
+networks:
+   movapp-network:
+      external: true
