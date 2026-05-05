@@ -10,9 +10,40 @@ services:
          - .env.docker
       environment:
          - TZ=America/Mexico_City
-      networks:
-         - movapp-network
+      depends_on:
+         - db
 
-networks:
-   movapp-network:
-      external: true
+   db:
+      image: postgres:16
+
+      container_name: movapp-db
+      restart: always
+      environment:
+         - POSTGRES_USER=admin
+         - POSTGRES_PASSWORD=movapp_pass
+         - POSTGRES_DB=Movapp
+         - TZ=America/Mexico_City
+         - PGTZ=America/Mexico_City
+      ports:
+         - "5432:5432"
+      volumes:
+         - movapp_db_data:/var/lib/postgresql/data
+         - /etc/localtime:/etc/localtime:ro
+      command: postgres -c timezone=America/Mexico_City
+
+   db2:
+      image: postgres:16
+      container_name: movapp-db2
+      restart: always
+      environment:
+         - POSTGRES_USER=admin2
+         - POSTGRES_PASSWORD=movapp_pass2
+         - POSTGRES_DB=MovappBackup
+      ports:
+         - "5433:5432"
+      volumes:
+         - movapp_backup_data:/var/lib/postgresql/data
+
+volumes:
+   movapp_db_data:
+   movapp_backup_data:
