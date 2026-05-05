@@ -9,6 +9,7 @@ import pagosRouter from "./routes/payments.js";
 import paymentsStripeRouter from "./routes/paymentsStripe.js";
 import ordersRouter from "./routes/orders.js";
 import notificationsRouter from "./routes/notifications.js";
+import videosRouter from "./routes/videos.js";
 
 process.env.TZ = "America/Mexico_City";
 const app = express();
@@ -68,6 +69,7 @@ app.use("/config", configRouter);
 app.use("/payments/stripe", paymentsStripeRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
+app.use("/videos", videosRouter);
 
 //initTables();
 
