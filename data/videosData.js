@@ -8,7 +8,7 @@ export const VIDEOS_DATA = [
       nombre: "Inicio",
       descripcion: "Banner principal de la pantalla de inicio",
       activo: true,
-      videos: [{ id: 1, videoId: "1185981852", orden: 0, activo: true }],
+      videos: [{ id: 1, videoId: "1192141922", orden: 0, activo: true }],
    },
    {
       slug: "mind",
@@ -48,5 +48,16 @@ export const VIDEOS_DATA = [
          { id: 12, videoId: "1166405733", orden: 11, activo: true },
          { id: 13, videoId: "1166405909", orden: 12, activo: true },
       ],
+   },
+      {
+      slug: "infiltrators",
+      nombre: "Infiltrados",
+      descripcion: "Videos sobre infiltraciones",
+      activo: true,
+      videos: [
+         { id: 1, videoId: "1185981852", orden: 0, activo: true },
+         // { id: 2, videoId: "1165547542", orden: 1, activo: true },
+      ],
+            
    },
 ];
