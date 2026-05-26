@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(eas build:list --platform android --limit 5 --non-interactive)",
+      "Bash(eas update:list --branch production --limit 8 --non-interactive)",
+      "Bash(env)",
+      "Bash(eas env:create --environment production --name EXPO_PUBLIC_API_URL --value \"https://api.movapp.org/\" --visibility plaintext --non-interactive)",
+      "Bash(eas update *)",
+      "Bash(wait)",
+      "Bash(rm -rf dist && CI=1 eas update --branch production --environment production --message \"Fix - Vimeo baseUrl Android + API_URL env \\(correccion build 28\\)\" --clear-cache --platform android 2>&1 | grep -v \"eas-cli\\\\|To upgrade\\\\|npm install\\\\|Proceeding with\\\\|\\\\.ttf\\\\|\\\\.png\\\\|node_modules/@\" | tail -30)"
+    ],
+    "additionalDirectories": [
+      "/Users/ikerfloresvaldez/Documents/RepLocal/Movapp/AppMovapp/movapp-app/dist"
+    ]
+  }
+}
