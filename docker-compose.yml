@@ -14,7 +14,7 @@ services:
          - db
 
    db:
-      image: postgres:16
+      image: postgres:17
 
       container_name: movapp-db
       restart: always
@@ -32,7 +32,7 @@ services:
       command: postgres -c timezone=America/Mexico_City
 
    db2:
-      image: postgres:16
+      image: postgres:17
       container_name: movapp-db2
       restart: always
       environment:
