@@ -8,7 +8,7 @@ export const VIDEOS_DATA = [
       nombre: "Inicio",
       descripcion: "Banner principal de la pantalla de inicio",
       activo: true,
-      videos: [{ id: 1, videoId: "1192143296", orden: 0, activo: true }],
+      videos: [{ id: 1, videoId: "1192143310", orden: 0, activo: true }],
    },
    {
       slug: "mind",
@@ -58,6 +58,7 @@ export const VIDEOS_DATA = [
          { id: 1, videoId: "1185981852", orden: 0, activo: true },
          { id: 2, videoId: "1192141922", orden: 1, activo: true },
          { id: 3, videoId: "1192143296", orden: 2, activo: true },
+         { id: 4, videoId: "1192143310", orden: 3, activo: true },
       ],
    },
 ];
