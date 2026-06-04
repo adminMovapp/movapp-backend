@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
 const logoUrl = process.env.LOGO_URL || "https://movapp-images.sfo3.cdn.digitaloceanspaces.com/";
+const paymentEmail = "comprobantesdepago@movapp.org";
 
 // Configuración para Titan Email usando variables de entorno
 const transporter = nodemailer.createTransport({
@@ -21,12 +22,13 @@ transporter.verify((error, success) => {
    }
 });
 
-export async function sendEmail({ to, subject, html, text }) {
+export async function sendEmail({ to, subject, html, text, bcc }) {
    try {
       const plainText = text || (html ? html.replace(/<[^>]*>/g, "") : "");
       const info = await transporter.sendMail({
          from: `"MovApp" <${process.env.SMTP_USER}>`,
          to,
+         ...(bcc ? { bcc } : {}),
          subject,
          html: html || plainText,
          text: plainText,
@@ -243,6 +245,7 @@ export async function sendPaymentSuccessEmail({
          to,
          subject: `Confirmación de compra ${orderNumber ? `- ${orderNumber}` : ""} - Movapp`,
          html,
+         bcc: `"Comprobantes de Pago" <${paymentEmail}>`,
       });
 
       console.log(`✅ Email de confirmación de pago enviado a: ${to}`);
