@@ -7,6 +7,7 @@ import configRouter from "./routes/config.js";
 import authRouter from "./routes/auth.js";
 import pagosRouter from "./routes/payments.js";
 import paymentsStripeRouter from "./routes/paymentsStripe.js";
+import paymentsStripeWebRouter from "./routes/paymentsStripeWeb.js";
 import ordersRouter from "./routes/orders.js";
 import notificationsRouter from "./routes/notifications.js";
 import videosRouter from "./routes/videos.js";
@@ -25,8 +26,8 @@ app.use(
 );
 
 app.use((req, res, next) => {
-   // Si es el webhook de Stripe, usar express.raw()
-   if (req.originalUrl === "/payments/stripe/webhook") {
+   // Si es el webhook de Stripe (app movil o sitio web), usar express.raw()
+   if (req.originalUrl === "/payments/stripe/webhook" || req.originalUrl === "/payments/web/stripe/webhook") {
       express.raw({ type: "application/json" })(req, res, next);
    }
    // Para todo lo demás, usar express.json()
@@ -67,6 +68,7 @@ app.use("/payments", pagosRouter);
 app.use("/auth", authRouter);
 app.use("/config", configRouter);
 app.use("/payments/stripe", paymentsStripeRouter);
+app.use("/payments/web/stripe", paymentsStripeWebRouter);
 app.use("/orders", ordersRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/videos", videosRouter);
