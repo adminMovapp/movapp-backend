@@ -61,4 +61,16 @@ export const VIDEOS_DATA = [
          { id: 4, videoId: "1192143310", orden: 3, activo: true },
       ],
    },
+   {
+      slug: "press",
+      nombre: "Prensa",
+      descripcion: "Apariciones y notas de prensa",
+      activo: true,
+      videos: [
+         { id: 1, videoId: "1232087423", orden: 0, activo: true },
+         { id: 2, videoId: "1232412985", orden: 1, activo: true },
+         { id: 3, videoId: "1232412877", orden: 2, activo: true },
+         { id: 4, videoId: "1232412984", orden: 3, activo: true },
+      ],
+   },
 ];
