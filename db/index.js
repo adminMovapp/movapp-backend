@@ -16,7 +16,8 @@ const pool = new Pool({
    user: process.env.PG_USER,
    password: process.env.PG_PASSWORD,
    database: process.env.PG_DATABASE,
-   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false, // SSL en producción
+   // SSL cuando la BD es remota (DigitalOcean exige TLS). Local/Docker: PG_SSL sin definir o "false"
+   ssl: process.env.PG_SSL === "true" || process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 // Función para manejar consultas con manejo de errores
