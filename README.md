@@ -85,6 +85,7 @@ Usadas en `utils/mailer.js` y `services/notificationService.js`:
 - `SMTP_USER` – Usuario SMTP.
 - `SMTP_PASS` – Contraseña SMTP.
 - `LOGO_URL` – (Opcional) URL base donde se aloja el logo para los correos.
+- `NOTIFICATIONS_API_KEY` – Clave secreta para los endpoints de envío de push (`/notifications/send`, `/send-to-user`, `/send-broadcast`, `/test`, `/welcome`, `/purchase`, `/payment`). El cliente debe mandarla en el header `x-internal-key`. Si no está definida, esos endpoints responden 503 (cerrados). Generar una con `openssl rand -hex 32`.
 
 ### Otros
 

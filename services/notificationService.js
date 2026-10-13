@@ -165,6 +165,20 @@ export const NotificationService = {
    },
 
    /**
+    * Verifica que el dispositivo exista y pertenezca al usuario autenticado.
+    * Lanza DEVICE_NOT_FOUND si no existe y FORBIDDEN_DEVICE si es de otro usuario.
+    */
+   async assertDeviceOwner(deviceId, userUuid) {
+      const owner = await NotificationDAO.deviceBelongsToUser(deviceId, userUuid);
+      if (owner === null) {
+         throw new Error("DEVICE_NOT_FOUND");
+      }
+      if (!owner) {
+         throw new Error("FORBIDDEN_DEVICE");
+      }
+   },
+
+   /**
     * Registra un push token para un dispositivo
     */
    async registerPushToken(deviceId, pushToken) {

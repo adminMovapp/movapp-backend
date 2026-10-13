@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { TokenService } from "../services/tokenService.js";
 
 const ERROR_MESSAGES = {
@@ -43,4 +44,31 @@ export const authenticateToken = (req, res, next) => {
          message,
       });
    }
+};
+
+/**
+ * Middleware para endpoints internos (envío de notificaciones push).
+ * Exige el header `x-internal-key` igual a NOTIFICATIONS_API_KEY. Si la
+ * variable no está configurada, el endpoint queda cerrado (503) en lugar de
+ * abierto: antes cualquiera podía hacer broadcast a todos los usuarios.
+ */
+export const requireInternalKey = (req, res, next) => {
+   const expected = process.env.NOTIFICATIONS_API_KEY;
+   if (!expected) {
+      console.error("requireInternalKey: NOTIFICATIONS_API_KEY no está configurada; endpoint bloqueado");
+      return res.status(503).json({
+         success: false,
+         message: "Envío de notificaciones no configurado en el servidor",
+      });
+   }
+
+   const provided = req.headers["x-internal-key"];
+   const a = Buffer.from(String(provided ?? ""));
+   const b = Buffer.from(expected);
+   const valid = a.length === b.length && timingSafeEqual(a, b);
+
+   if (!valid) {
+      return res.status(401).json({ success: false, message: ERROR_MESSAGES.UNAUTHORIZED });
+   }
+   next();
 };

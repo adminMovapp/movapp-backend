@@ -6,12 +6,21 @@ import { query } from "../db/index.js";
 
 export const NotificationDAO = {
    /**
-    * Registra o actualiza el push token de un dispositivo
+    * Registra o actualiza el push token de un dispositivo.
+    * Un token identifica una instalación física, así que primero se retira de
+    * cualquier otra fila que lo tuviera (reinstalaciones generan deviceId
+    * nuevo): sin esto, send-to-user y broadcast mandan la misma push varias
+    * veces al mismo teléfono.
     */
    async updatePushToken(deviceId, pushToken) {
       try {
          const result = await query(
-            `UPDATE Dispositivos 
+            `WITH limpiadas AS (
+                UPDATE Dispositivos
+                SET push_token = NULL, updated_at = NOW()
+                WHERE push_token = $1 AND device_id <> $2
+             )
+             UPDATE Dispositivos
              SET push_token = $1, push_enabled = TRUE, updated_at = NOW()
              WHERE device_id = $2
              RETURNING *`,
@@ -20,6 +29,27 @@ export const NotificationDAO = {
          return result.rows[0];
       } catch (err) {
          console.error("NotificationDAO.updatePushToken error", err);
+         throw err;
+      }
+   },
+
+   /**
+    * Indica si el dispositivo pertenece al usuario (user_uuid del JWT).
+    * Devuelve null si el dispositivo no existe.
+    */
+   async deviceBelongsToUser(deviceId, userUuid) {
+      try {
+         const result = await query(
+            `SELECT u.user_uuid = $2 AS es_dueno
+             FROM Dispositivos d
+             INNER JOIN Usuarios u ON d.user_id = u.id
+             WHERE d.device_id = $1`,
+            [deviceId, userUuid],
+         );
+         if (result.rows.length === 0) return null;
+         return result.rows[0].es_dueno === true;
+      } catch (err) {
+         console.error("NotificationDAO.deviceBelongsToUser error", err);
          throw err;
       }
    },

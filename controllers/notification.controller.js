@@ -7,10 +7,24 @@ import { NotificationService } from "../services/notificationService.js";
 const ERROR_MESSAGES = {
    INVALID_PUSH_TOKEN: "Push token inválido",
    DEVICE_NOT_FOUND: "Dispositivo no encontrado",
+   FORBIDDEN_DEVICE: "El dispositivo no pertenece a este usuario",
    NO_PUSH_TOKEN: "No se encontró push token para este dispositivo",
    NO_ACTIVE_DEVICES: "No se encontraron dispositivos activos",
    MISSING_PARAMS: "Parámetros requeridos faltantes",
 };
+
+// Código HTTP para los errores de los endpoints de dispositivo (requieren sesión)
+const DEVICE_ERROR_STATUS = {
+   DEVICE_NOT_FOUND: 404,
+   FORBIDDEN_DEVICE: 403,
+   INVALID_PUSH_TOKEN: 400,
+};
+
+function sendDeviceError(res, err, fallbackMessage) {
+   const message = ERROR_MESSAGES[err.message] || fallbackMessage;
+   const status = DEVICE_ERROR_STATUS[err.message] || 500;
+   res.status(status).json({ success: false, message });
+}
 
 export const NotificationController = {
    /**
@@ -28,6 +42,7 @@ export const NotificationController = {
             });
          }
 
+         await NotificationService.assertDeviceOwner(deviceId, req.user.id);
          const device = await NotificationService.registerPushToken(deviceId, pushToken);
 
          res.json({
@@ -40,9 +55,7 @@ export const NotificationController = {
          });
       } catch (err) {
          console.error("❌ Error en registerPushToken:", err);
-         const message = ERROR_MESSAGES[err.message] || "Error registrando push token";
-         const status = err.message === "DEVICE_NOT_FOUND" ? 404 : err.message === "INVALID_PUSH_TOKEN" ? 400 : 500;
-         res.status(status).json({ success: false, message });
+         sendDeviceError(res, err, "Error registrando push token");
       }
    },
 
@@ -64,7 +77,7 @@ export const NotificationController = {
             });
          }
 
-         // console.log("🔄 [Controller] Llamando a NotificationService.updatePushNotificationStatus...");
+         await NotificationService.assertDeviceOwner(deviceId, req.user.id);
          const device = await NotificationService.updatePushNotificationStatus(deviceId, enabled);
          // console.log("✅ [Controller] Dispositivo actualizado:", {
          //    device_id: device?.device_id,
@@ -83,10 +96,7 @@ export const NotificationController = {
          res.json(response);
       } catch (err) {
          console.error("❌ Error en togglePushNotifications:", err);
-         res.status(500).json({
-            success: false,
-            message: "Error actualizando notificaciones",
-         });
+         sendDeviceError(res, err, "Error actualizando notificaciones");
       }
    },
 
@@ -105,6 +115,7 @@ export const NotificationController = {
             });
          }
 
+         await NotificationService.assertDeviceOwner(deviceId, req.user.id);
          await NotificationService.disablePushNotifications(deviceId);
 
          res.json({
@@ -113,10 +124,7 @@ export const NotificationController = {
          });
       } catch (err) {
          console.error("❌ Error en disablePushNotifications:", err);
-         res.status(500).json({
-            success: false,
-            message: "Error desactivando notificaciones",
-         });
+         sendDeviceError(res, err, "Error desactivando notificaciones");
       }
    },
 
@@ -368,7 +376,7 @@ export const NotificationController = {
             });
          }
 
-         // console.log("🔄 [Controller] Llamando a NotificationService.getDevicePushInfo...");
+         await NotificationService.assertDeviceOwner(deviceId, req.user.id);
          const device = await NotificationService.getDevicePushInfo(deviceId);
          // console.log("✅ [Controller] Información del dispositivo obtenida:", {
          //    device_id: device.device_id,
@@ -398,9 +406,7 @@ export const NotificationController = {
          res.json(response);
       } catch (err) {
          console.error("❌ Error en getDevicePushInfo:", err);
-         const message = ERROR_MESSAGES[err.message] || "Error obteniendo información del dispositivo";
-         const status = err.message === "DEVICE_NOT_FOUND" ? 404 : 500;
-         res.status(status).json({ success: false, message });
+         sendDeviceError(res, err, "Error obteniendo información del dispositivo");
       }
    },
 };
